@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Vel Tech Bus Management</title>
+    <link rel="stylesheet" href="css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Admin Login</h1>
+            <p class="text-gray-600">Vel Tech Bus Management System</p>
+            <div id="connection-status" class="mt-2 inline-block">
+                🔄 Testing connection...
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <div id="login-container">
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="username">Username</label>
+                <input id="username" type="text" autocomplete="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter username (admin)" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="password">Password</label>
+                <input id="password" type="password" autocomplete="current-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter password" required>
+            </div>
+                <button type="submit" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">Login</button>
+            </form>
+
+            <div class="mt-4 text-sm text-center">
+                <button id="forgot-btn" class="text-blue-600 hover:underline">Forgot Password?</button>
+            </div>
+        </div>
+
+        <!-- Phone Verification Form -->
+        <div id="phone-verification-container" class="hidden">
+            <div class="text-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Password Recovery</h2>
+                <p class="text-gray-600 text-sm">Enter your registered phone number to receive a verification code</p>
+            </div>
+            
+            <form id="phone-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="phone-number">Phone Number</label>
+                    <input id="phone-number" type="tel" autocomplete="tel" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your phone number" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors">Send Verification Code</button>
+            </form>
+
+            <div class="mt-4 text-sm text-center">
+                <button id="back-to-login" class="text-blue-600 hover:underline">Back to Login</button>
+            </div>
+        </div>
+
+        <!-- OTP Verification Form -->
+        <div id="otp-verification-container" class="hidden">
+            <div class="text-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Verify Phone Number</h2>
+                <p class="text-gray-600 text-sm">Enter the 6-digit code sent to your phone</p>
+                <div id="otp-display" class="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-md text-sm text-yellow-800 hidden">
+                    <strong>🔐 Testing Mode:</strong> <span id="otp-code-display"></span>
+                </div>
+            </div>
+            
+            <form id="otp-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="otp-code">Verification Code</label>
+                    <input id="otp-code" type="text" maxlength="6" autocomplete="one-time-code" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest" placeholder="000000" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">Verify & Change Password</button>
+            </form>
+
+            <div class="mt-4 text-sm text-center">
+                <button id="back-to-phone" class="text-blue-600 hover:underline">Back</button>
+                <span class="mx-2">|</span>
+                <button id="resend-code" class="text-blue-600 hover:underline">Resend Code</button>
+            </div>
+        </div>
+
+        <!-- New Password Form -->
+        <div id="new-password-container" class="hidden">
+            <div class="text-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Set New Password</h2>
+                <p class="text-gray-600 text-sm">Create a new secure password</p>
+            </div>
+            
+            <form id="new-password-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="new-password">New Password</label>
+                    <input id="new-password" type="password" autocomplete="new-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter new password" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="confirm-password">Confirm Password</label>
+                    <input id="confirm-password" type="password" autocomplete="new-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Confirm new password" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors">Update Password</button>
+        </form>
+
+        <div class="mt-4 text-sm text-center">
+                <button id="back-to-login-from-password" class="text-blue-600 hover:underline">Back to Login</button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="success-message" class="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-md hidden"></div>
+        <div id="error-message" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md hidden"></div>
+        
+        <!-- Debug Panel (only shown in development) -->
+        <div id="debug-panel" class="mt-4 p-3 bg-gray-100 border border-gray-300 text-gray-700 rounded-md text-xs hidden">
+            <div class="font-semibold mb-2">🔧 Debug Information:</div>
+            <div><strong>Supabase URL:</strong> <span id="debug-url">Loading...</span></div>
+            <div><strong>Connection Status:</strong> <span id="debug-status">Testing...</span></div>
+            <div><strong>Database Table:</strong> admin_credentials</div>
+            <div><strong>Error Details:</strong> <span id="debug-error">None</span></div>
+            <button id="test-connection-btn" class="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">
+                🔄 Test Connection Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Supabase client from centralized config
+        const supabase = window.supabaseClient;
+
+        // Storage keys
+        const STORAGE_KEYS = {
+            adminPassword: 'vt_admin_password',
+            adminPhone: 'vt_admin_phone'
+        };
+
+        // Default admin credentials
+        const DEFAULT_ADMIN = {
+            username: 'admin',
+            password: 'admin',
+            phone: '+917207509620' // Default phone number for testing
+        };
+
+        // State management
+        let currentPhone = '';
+        let generatedOTP = '';
+        let otpAttempts = 0;
+
+        // DOM Elements
+        const loginContainer = document.getElementById('login-container');
+        const phoneContainer = document.getElementById('phone-verification-container');
+        const otpContainer = document.getElementById('otp-verification-container');
+        const passwordContainer = document.getElementById('new-password-container');
+        const successMessage = document.getElementById('success-message');
+        const errorMessage = document.getElementById('error-message');
+
+        // Check if Supabase is available
+        let supabaseAvailable = false;
+
+        // Test Supabase connection
+        async function testSupabaseConnection() {
+            try {
+                const { data, error } = await supabase
+                    .from('admin_credentials')
+                    .select('count')
+                    .limit(1);
+                
+                supabaseAvailable = !error;
+                console.log('🔗 Supabase connection:', supabaseAvailable ? '✅ Connected' : '❌ Failed');
+                console.log('📊 Connection details:', { data, error });
+                
+                // Show connection status on page
+                showConnectionStatus();
+                
+                return supabaseAvailable;
+            } catch (error) {
+                console.error('Supabase connection test failed:', error);
+                supabaseAvailable = false;
+                showConnectionStatus();
+                return false;
+            }
+        }
+
+        // Show connection status on the page
+        function showConnectionStatus() {
+            const statusElement = document.getElementById('connection-status');
+            if (statusElement) {
+                statusElement.textContent = supabaseAvailable ? '🟢 Connected to Supabase' : '🟡 Using Local Storage';
+                statusElement.className = supabaseAvailable ? 
+                    'text-xs text-green-600 bg-green-100 px-2 py-1 rounded' : 
+                    'text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded';
+            }
+
+            // Update debug panel
+            updateDebugPanel();
+        }
+
+        // Update debug panel with connection information
+        function updateDebugPanel() {
+            const debugPanel = document.getElementById('debug-panel');
+            const debugUrl = document.getElementById('debug-url');
+            const debugStatus = document.getElementById('debug-status');
+            const debugError = document.getElementById('debug-error');
+
+            if (debugUrl) debugUrl.textContent = SUPABASE_URL;
+            if (debugStatus) {
+                debugStatus.textContent = supabaseAvailable ? '✅ Connected' : '❌ Failed';
+                debugStatus.className = supabaseAvailable ? 'text-green-600' : 'text-red-600';
+            }
+            
+            // Show debug panel if there's an issue
+            if (debugPanel && !supabaseAvailable) {
+                debugPanel.classList.remove('hidden');
+                if (debugError) debugError.textContent = 'Database table not accessible or not created';
+            }
+        }
+
+        // Manual connection test
+        async function manualConnectionTest() {
+            const testBtn = document.getElementById('test-connection-btn');
+            const debugStatus = document.getElementById('debug-status');
+            
+            if (testBtn) {
+                testBtn.textContent = '🔄 Testing...';
+                testBtn.disabled = true;
+            }
+            
+            if (debugStatus) debugStatus.textContent = '🔄 Testing...';
+            
+            const result = await testSupabaseConnection();
+            
+            if (testBtn) {
+                testBtn.textContent = '🔄 Test Connection Again';
+                testBtn.disabled = false;
+            }
+            
+            if (result) {
+                showSuccess('✅ Supabase connection successful!');
+            } else {
+                showError('❌ Supabase connection failed. Using localStorage fallback.');
+            }
+        }
+
+        // Initialize admin data in Supabase if not exists
+        async function initializeAdminData() {
+            if (!supabaseAvailable) {
+                console.log('Supabase not available, using localStorage fallback');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('admin_credentials')
+                    .select('*')
+                    .eq('username', DEFAULT_ADMIN.username)
+                    .single();
+
+                if (error && error.code === 'PGRST116') {
+                    // Admin doesn't exist, create default admin
+                    const { error: insertError } = await supabase
+                        .from('admin_credentials')
+                        .insert([{
+                            username: DEFAULT_ADMIN.username,
+                            password: DEFAULT_ADMIN.password,
+                            phone: DEFAULT_ADMIN.phone,
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (insertError) {
+                        console.error('Error creating admin:', insertError);
+                        supabaseAvailable = false;
+                    } else {
+                        console.log('Default admin created successfully');
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing admin data:', error);
+                supabaseAvailable = false;
+            }
+        }
+
+        // Utility functions
+        function showContainer(containerId) {
+            // Hide all containers
+            document.querySelectorAll('[id$="-container"]').forEach(container => {
+                container.classList.add('hidden');
+            });
+            // Show target container
+            document.getElementById(containerId).classList.remove('hidden');
+            clearMessages();
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+        }
+
+        function clearMessages() {
+            successMessage.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        function setAuthed() { try { localStorage.setItem('vt_admin_authed','true'); } catch(e) {} }
+
+        function isAuthed() { return false; }
+
+        // Generate random OTP
+        function generateOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        // Simulate sending OTP (in real app, integrate with SMS service)
+        function sendOTP(phone, otp) {
+            // For demo purposes, we'll just store the OTP and show it
+            // In production, integrate with services like Twilio, AWS SNS, etc.
+            console.log(`OTP sent to ${phone}: ${otp}`);
+            
+            // For testing purposes, show OTP in console and alert
+            console.log(`🔐 TESTING OTP: ${otp}`);
+            alert(`🔐 TESTING MODE\nOTP for ${phone}: ${otp}\n\nIn production, this would be sent via SMS.`);
+            
+            return Promise.resolve(true);
+        }
+
+        // Supabase-only: remove localStorage admin store helpers
+
+        // Authentication functions
+        async function authenticateAdmin(username, password) {
+            // Supabase-only authentication
+            try {
+                const { data, error } = await supabase
+                    .from('admin_credentials')
+                    .select('*')
+                    .eq('username', username)
+                    .single();
+                if (error) {
+                    return { success: false, message: 'Database error during authentication' };
+                }
+                if (!data) {
+                    return { success: false, message: 'Username not found' };
+                }
+                if (data.password !== password) {
+                    return { success: false, message: 'Incorrect password' };
+                }
+                return { success: true, data };
+            } catch (error) {
+                console.error('Authentication error:', error);
+                return { success: false, message: 'Unable to authenticate at this time' };
+            }
+        }
+
+        async function verifyPhoneNumber(phone) {
+            // Supabase-only phone verification
+            try {
+                const { data, error } = await supabase
+                    .from('admin_credentials')
+                    .select('phone')
+                    .eq('phone', phone)
+                    .single();
+                if (error && error.code === 'PGRST116') {
+                    return { success: false, message: 'Phone number not registered' };
+                }
+                if (error) {
+                    console.error('Database error:', error);
+                    return { success: false, message: 'Verification failed' };
+                }
+                return { success: true };
+            } catch (error) {
+                console.error('Phone verification error:', error);
+                return { success: false, message: 'Unable to verify at this time' };
+            }
+        }
+
+        async function updateAdminPassword(phone, newPassword) {
+            // Supabase-only password update
+            try {
+                const { error } = await supabase
+                    .from('admin_credentials')
+                    .update({ password: newPassword })
+                    .eq('phone', phone);
+                if (error) {
+                    console.error('Database error:', error);
+                    return { success: false, message: 'Failed to update password' };
+                }
+                return { success: true };
+            } catch (error) {
+                console.error('Password update error:', error);
+                return { success: false, message: 'Unable to update at this time' };
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+
+            // Map username -> Supabase email
+            const ADMIN_USERNAME = 'admin';
+            const ADMIN_EMAIL = 'singamalavishnu@gmail.com';
+            if (username.toLowerCase() !== ADMIN_USERNAME) {
+                showError('Invalid username');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+                if (error) {
+                    showError(error.message || 'Unable to sign in.');
+                    return;
+                }
+                if (data && data.session) {
+                    showSuccess('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = 'admin-interface.html';
+                    }, 800);
+                } else {
+                    showError('No session returned. Please try again.');
+                }
+            } catch (err) {
+                console.error('Supabase sign-in error:', err);
+                showError('Unexpected error during sign-in.');
+            }
+        });
+
+        document.getElementById('forgot-btn').addEventListener('click', () => {
+            showContainer('phone-verification-container');
+        });
+
+        document.getElementById('back-to-login').addEventListener('click', () => {
+            showContainer('login-container');
+        });
+
+        document.getElementById('phone-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phone-number').value.trim();
+
+            if (!phone) {
+                showError('Please enter your phone number');
+                return;
+            }
+
+            // Verify phone number exists
+            const verification = await verifyPhoneNumber(phone);
+            
+            if (!verification.success) {
+                showError(verification.message);
+                return;
+            }
+
+            currentPhone = phone;
+            generatedOTP = generateOTP();
+            otpAttempts = 0;
+
+            // Send OTP
+            const otpSent = await sendOTP(phone, generatedOTP);
+            
+            if (otpSent) {
+                showContainer('otp-verification-container');
+                showSuccess('Verification code sent to your phone');
+                
+                // Show OTP in UI for testing
+                const otpDisplay = document.getElementById('otp-display');
+                const otpCodeDisplay = document.getElementById('otp-code-display');
+                if (otpDisplay && otpCodeDisplay) {
+                    otpCodeDisplay.textContent = generatedOTP;
+                    otpDisplay.classList.remove('hidden');
+                }
+            } else {
+                showError('Failed to send verification code');
+            }
+        });
+
+        document.getElementById('back-to-phone').addEventListener('click', () => {
+            showContainer('phone-verification-container');
+        });
+
+        document.getElementById('resend-code').addEventListener('click', async () => {
+            if (otpAttempts >= 3) {
+                showError('Too many attempts. Please try again later.');
+                return;
+            }
+
+            generatedOTP = generateOTP();
+            const otpSent = await sendOTP(currentPhone, generatedOTP);
+            
+            if (otpSent) {
+                showSuccess('New verification code sent');
+                otpAttempts++;
+                
+                // Update OTP display
+                const otpCodeDisplay = document.getElementById('otp-code-display');
+                if (otpCodeDisplay) {
+                    otpCodeDisplay.textContent = generatedOTP;
+                }
+            } else {
+                showError('Failed to resend verification code');
+            }
+        });
+
+        document.getElementById('otp-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const enteredOTP = document.getElementById('otp-code').value.trim();
+
+            if (!enteredOTP) {
+                showError('Please enter the verification code');
+                return;
+            }
+
+            if (enteredOTP !== generatedOTP) {
+                showError('Invalid verification code');
+                return;
+            }
+
+            showContainer('new-password-container');
+            showSuccess('Phone number verified successfully');
+        });
+
+        document.getElementById('back-to-login-from-password').addEventListener('click', () => {
+            showContainer('login-container');
+        });
+
+        document.getElementById('new-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (!newPassword || !confirmPassword) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showError('Password must be at least 6 characters long');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            const updateResult = await updateAdminPassword(currentPhone, newPassword);
+            
+            if (updateResult.success) {
+                showSuccess('Password updated successfully! You can now login with your new password.');
+                setTimeout(() => {
+                    showContainer('login-container');
+                    // Clear forms
+                    document.getElementById('phone-number').value = '';
+                    document.getElementById('otp-code').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                }, 2000);
+            } else {
+                showError(updateResult.message);
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Supabase-only: no local pre-auth redirect
+
+            // Test Supabase connection first
+            await testSupabaseConnection();
+            
+            // Show login form by default
+            showContainer('login-container');
+
+            // Add event listener for manual connection test
+            const testBtn = document.getElementById('test-connection-btn');
+            if (testBtn) {
+                testBtn.addEventListener('click', manualConnectionTest);
+            }
+        });
+    </script>
+</body>
+</html>
+
+

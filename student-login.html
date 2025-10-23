@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - Vel Tech Bus Management</title>
+    <link rel="stylesheet" href="css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center space-x-3 mb-4">
+            <img src="images/vt.jpg" alt="Vel Tech Logo" class="h-10 w-auto">
+            <h1 class="text-xl font-bold text-gray-800">Student Login</h1>
+        </div>
+
+        <form id="student-login-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Institutional Email</label>
+                <input id="email" type="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="vtu12345@veltech.edu.in" autocomplete="username">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input id="password" type="password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="VTU12345" autocomplete="current-password">
+            </div>
+            <p id="error" class="text-sm text-red-600 hidden">Invalid credentials</p>
+            <button type="submit" class="w-full inline-flex justify-center py-2 px-4 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Login</button>
+        </form>
+
+        <div class="mt-4"></div>
+    </div>
+
+    <script>
+        const STORAGE = {
+            studentAuth: 'vt_student_authed',
+            studentId: 'vt_student_id',
+            loginLogs: 'vt_student_login_logs'
+        };
+
+        // If already logged in (local flag), go straight to student dashboard
+        (function redirectIfAuthed() {
+            try {
+                const authed = localStorage.getItem(STORAGE.studentAuth) === 'true';
+                if (authed) { window.location.href = 'student-interface.html'; }
+            } catch (e) {}
+        })();
+
+        const form = document.getElementById('student-login-form');
+        const emailEl = document.getElementById('email');
+        const passwordEl = document.getElementById('password');
+        const errorEl = document.getElementById('error');
+
+        function parseVtuIdFromEmail(email) {
+            // rules: username must be vtu(5 digits)@veltech.edu.in (case-insensitive)
+            const m = /^vtu(\d{5})@veltech\.edu\.in$/i.exec(email.trim());
+            return m ? m[1] : null;
+        }
+
+        async function appendLoginLog(email, idDigits) {
+            const timestamp = new Date().toISOString();
+            // Prefer Supabase if configured, else fallback to localStorage
+            if (window.supabaseClient) {
+                try {
+                    const { error } = await window.supabaseClient
+                        .from('student_logins')
+                        .insert([{ email: email, student_id: idDigits, login_at: timestamp }]);
+                    if (!error) return;
+                } catch (e) {}
+            }
+            const entry = { email: email, studentId: idDigits, timestamp };
+            try {
+                const raw = localStorage.getItem(STORAGE.loginLogs);
+                const arr = raw ? JSON.parse(raw) : [];
+                arr.push(entry);
+                localStorage.setItem(STORAGE.loginLogs, JSON.stringify(arr));
+            } catch (e) {}
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorEl.classList.add('hidden');
+            const email = (emailEl.value || '').trim();
+            const idDigits = parseVtuIdFromEmail(email);
+            const password = (passwordEl.value || '').trim();
+            if (!idDigits) {
+                errorEl.textContent = 'Email must be vtu12345@veltech.edu.in';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            const expectedPassword = 'VTU' + idDigits;
+            if (password === expectedPassword) {
+                try {
+                    localStorage.setItem(STORAGE.studentAuth, 'true');
+                    localStorage.setItem(STORAGE.studentId, idDigits);
+                    appendLoginLog(email, idDigits);
+                } catch (e) {}
+                window.location.href = 'student-interface.html';
+                return;
+            }
+            errorEl.textContent = 'Invalid email or password';
+            errorEl.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
+

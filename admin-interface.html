@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vel Tech Bus Management</title>
+    <link rel="stylesheet" href="css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col relative z-0" data-mode="admin">
+    <!-- Main Application Container -->
+    <div class="flex-grow flex flex-col p-4 md:p-8">
+
+        <!-- Header -->
+        <header class="bg-white rounded-xl shadow-md p-4 mb-8 relative z-10">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                    <img id="logo" src="images/vt.jpg" alt="Vel Tech Logo" class="h-12 w-auto cursor-pointer">
+                    <h1 id="site-title" class="text-2xl md:text-3xl font-bold text-gray-800 cursor-pointer">Vel Tech Bus Management</h1>
+                </div>
+                <!-- Navigation Tabs -->
+                <nav class="flex space-x-2 md:space-x-4" role="tablist">
+                    <button id="schedule-tab" role="tab" aria-controls="schedule-section" aria-selected="false" class="px-3 py-2 md:px-4 md:py-2 font-medium text-gray-600 rounded-lg hover:bg-gray-200 focus:outline-none focus:bg-gray-200 transition-colors duration-200">Bus Schedule</button>
+                    <button id="manage-tab" role="tab" aria-controls="manage-section" aria-selected="false" class="px-3 py-2 md:px-4 md:py-2 font-medium text-gray-600 rounded-lg hover:bg-gray-200 focus:outline-none focus:bg-gray-200 transition-colors duration-200">Manage Routes</button>
+                    <button id="logins-tab" role="tab" aria-controls="logins-section" aria-selected="false" class="px-3 py-2 md:px-4 md:py-2 font-medium text-gray-600 rounded-lg hover:bg-gray-200 focus:outline-none focus:bg-gray-200 transition-colors duration-200">Student Logins</button>
+                </nav>
+                <div class="flex space-x-2 mt-4 md:mt-0">
+                    <button id="change-password-btn" class="px-3 py-2 md:px-4 md:py-2 font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:bg-gray-200 transition-colors duration-200">Change Password</button>
+                    <button id="logout-btn" class="px-3 py-2 md:px-4 md:py-2 font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:bg-red-700 transition-colors duration-200">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Sections -->
+        <main class="flex-grow relative z-10">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dashboard Cards -->
+                    <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Active Buses</p>
+                            <h2 class="text-3xl font-semibold text-gray-800" id="active-buses-count">0</h2>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.553-.894L11 8m0 0l-5 2.5a1 1 0 010 1.789l5 2.5m0 0l7.585-3.793a1 1 0 01.915-.028L19 12m-8 2l8 4"/>
+                        </svg>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">On-Time Departures</p>
+                            <h2 class="text-3xl font-semibold text-gray-800" id="on-time-count">0</h2>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    
+                     <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Scheduled Trips Today</p>
+                            <h2 class="text-3xl font-semibold text-gray-800" id="trips-today-count">0</h2>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-10 w-10 text-purple-500">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-4.509 0-8.25 3.692-8.25 8.25 0 4.51 3.692 8.25 8.25 8.25 4.508 0 8.25-3.692 8.25-8.25 0-2.208-.953-4.214-2.5-5.673m-13.488 5.856a48.111 48.111 0 0 1-3.473-1.042" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Live Map Section -->
+                <div class="mt-8 flex justify-end">
+                    <div class="bg-white p-6 rounded-xl shadow-md w-full md:w-4/12 lg:w-3/12">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">College Location</h2>
+                        <div id="map-placeholder" class="bg-gray-200 rounded-lg overflow-hidden cursor-pointer" style="height:14rem; min-height:14rem;">
+                            <div id="college-map" class="w-full h-full"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Admin Notes and Helpline Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-gray-800">Special Notes from Admin</h3>
+                            <button id="edit-notes-btn" class="px-3 py-1 text-xs font-medium text-white bg-gray-500 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">Edit</button>
+                        </div>
+                        <p id="admin-notes-display" class="text-gray-600">
+                            Loading notes...
+                        </p>
+                        <textarea id="admin-notes-textarea" class="hidden w-full mt-2 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        <button id="save-notes-btn" class="hidden mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">Save</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Helpline Numbers</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-600">
+                            <li>Transport Office: 98765 43210</li>
+                            <li>Bus Coordinator: 99887 76655</li>
+                            <li>Emergency Services: 100</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bus Schedule Section -->
+            <section id="schedule-section" class="content-section hidden">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Bus Schedule</h2>
+                        <div id="weekly-dates-container" class="flex flex-wrap gap-2 mt-2 md:mt-0">
+                            <!-- Weekly dates will be populated here -->
+                        </div>
+                        <p id="current-time" class="text-lg font-bold text-gray-700 ml-4"></p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left rounded-tl-lg">Bus No.</th>
+                                    <th class="py-3 px-6 text-left">Route</th>
+                                    <th class="py-3 px-6 text-left">Departure Time</th>
+                                    <th class="py-3 px-6 text-left rounded-tr-lg">ETA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-table-body" class="text-gray-600 text-sm font-medium">
+                                <tr><td colspan="4" class="py-3 px-6 text-center text-gray-400">Loading schedule...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Manage Routes Section -->
+            <section id="manage-section" class="content-section hidden">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Manage Routes</h2>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <label for="schedule-date" class="text-sm font-medium text-gray-700">Select Date (for schedule preview):</label>
+                        <input type="date" id="schedule-date" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <form id="add-bus-form" class="space-y-4">
+                        <div>
+                            <label for="bus-number" class="block text-sm font-medium text-gray-700">Bus Number</label>
+                            <input type="text" id="bus-number" name="busNumber" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="route-name" class="block text-sm font-medium text-gray-700">Route Name</label>
+                            <input type="text" id="route-name" name="routeName" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                         <div>
+                            <label for="departure-time" class="block text-sm font-medium text-gray-700">Departure Time (From College - All Days)</label>
+                            <div class="mt-1 flex items-center space-x-2">
+                                <input type="time" id="departure-time" name="departureTime" required class="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <select id="departure-ampm" class="px-2 py-2 border border-gray-300 rounded-md bg-white text-sm">
+                                    <option value="AM" selected>AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="eta" class="block text-sm font-medium text-gray-700">Estimated Arrival Time (At Last Stop)</label>
+                            <div class="mt-1 flex items-center space-x-2">
+                                <input type="time" id="eta" name="eta" required class="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <select id="eta-ampm" class="px-2 py-2 border border-gray-300 rounded-md bg-white text-sm">
+                                    <option value="AM" selected>AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                         <div>
+                            <label for="stops-data" class="block text-sm font-medium text-gray-700">
+                                Stops with ETA
+                            </label>
+                            <div id="stops-builder" class="mt-2 space-y-2">
+                                <!-- Dynamic stop rows will be inserted here -->
+                            </div>
+                            <button type="button" id="add-stop-btn" class="mt-2 px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">+ Add Stop</button>
+                            <p class="text-xs text-gray-500 mt-2">Stops are auto-synced to the database. Format preview stored internally.</p>
+                            <textarea id="stops-data" name="stopsData" rows="3" required class="hidden mt-1 w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                        </div>
+                        <button type="submit" id="submit-btn" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">Add Bus</button>
+                    </form>
+
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">User-Added Routes</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-auto border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                        <th class="py-3 px-6 text-left rounded-tl-lg">Bus No.</th>
+                                        <th class="py-3 px-6 text-left">Route</th>
+                                        <th class="py-3 px-6 text-left">Departure Time</th>
+                                        <th class="py-3 px-6 text-left">ETA</th>
+                                        <th class="py-3 px-6 text-left">Stops</th>
+                                        <th class="py-3 px-6 text-left rounded-tr-lg">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-routes-table-body" class="text-gray-600 text-sm font-medium">
+                                    <tr><td colspan="6" class="py-3 px-6 text-center text-gray-400">Loading routes...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Student Logins Section -->
+            <section id="logins-section" class="content-section hidden">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Student Login Activity</h2>
+                        <div class="space-x-2">
+                            <button id="refresh-logs" class="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Refresh</button>
+                            <button id="clear-logs" class="px-3 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700">Clear Logs</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left rounded-tl-lg">#</th>
+                                    <th class="py-3 px-6 text-left">Email</th>
+                                    <th class="py-3 px-6 text-left">Student ID</th>
+                                    <th class="py-3 px-6 text-left rounded-tr-lg">Login Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="login-logs-tbody" class="text-gray-600 text-sm font-medium">
+                                <tr><td colspan="4" class="py-3 px-6 text-center text-gray-400">Loading login logs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="fixed inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-[99] hidden">
+            <div class="animate-bus-animation w-16 h-8 bus-icon-placeholder"></div>
+        </div>
+
+        <!-- Custom Message Box -->
+        <div id="message-box" class="message-box hidden bg-white p-6 rounded-xl shadow-lg border border-gray-300">
+            <p id="message-text" class="text-center font-medium text-gray-800"></p>
+            <div class="flex justify-center mt-4">
+                <button id="message-ok" class="px-4 py-2 font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">OK</button>
+            </div>
+        </div>
+        
+        <!-- Stops Modal -->
+        <div id="stops-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="stops-modal-title" class="text-xl font-bold">Bus Stops</h2>
+                    <button id="close-stops-modal" class="text-gray-500 hover:text-gray-700">&times;</button>
+                </div>
+                <!-- Bus stops table will be populated here -->
+                <table class="w-full table-auto border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-left rounded-tl-lg">Stop</th>
+                            <th class="py-3 px-6 text-left rounded-tr-lg">ETA</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stops-table-body" class="text-gray-600 text-sm font-medium">
+                        <!-- Stops will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div id="change-password-modal" class="modal hidden">
+            <div class="modal-content max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Change Admin Password</h2>
+                    <button id="close-change-password-modal" class="text-gray-500 hover:text-gray-700">&times;</button>
+                </div>
+                <form id="change-password-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Current Password</label>
+                        <input id="cp-current" type="password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500" placeholder="Enter current password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">New Password</label>
+                        <input id="cp-new" type="password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500" placeholder="Enter new password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                        <input id="cp-confirm" type="password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500" placeholder="Re-enter new password">
+                    </div>
+                    <p id="cp-error" class="text-sm text-red-600 hidden"></p>
+                    <p id="cp-success" class="text-sm text-green-600 hidden"></p>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="cp-cancel" class="px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                        <button type="submit" id="cp-submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white text-center p-4 mt-8 rounded-xl shadow-md">
+            <p>&copy; 2024 Vel Tech Bus Management. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript for dynamic functionality -->
+    <script>
+        // Auth guard: require Supabase session
+        (async function () {
+            try {
+                const supa = window.supabaseClient;
+                if (!supa) { window.location.href = 'admin-login.html'; return; }
+                const { data: { session } } = await supa.auth.getSession();
+                if (!session) { window.location.href = 'admin-login.html'; return; }
+                console.log('Admin authenticated via Supabase session');
+            } catch (e) {
+                console.error('Auth guard error:', e);
+                window.location.href = 'admin-login.html';
+            }
+
+        // Wire up change password UI
+        if (changePasswordBtn) {
+            changePasswordBtn.addEventListener('click', openChangePasswordModal);
+        }
+        if (closeChangePasswordModalBtn) {
+            closeChangePasswordModalBtn.addEventListener('click', closeChangePasswordModal);
+        }
+        if (cpCancel) {
+            cpCancel.addEventListener('click', closeChangePasswordModal);
+        }
+
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                cpError.classList.add('hidden');
+                cpSuccess.classList.add('hidden');
+                const currentPw = (cpCurrent.value || '').trim();
+                const newPw = (cpNew.value || '').trim();
+                const confirmPw = (cpConfirm.value || '').trim();
+                if (!newPw || newPw.length < 6) {
+                    cpError.textContent = 'New password must be at least 6 characters.';
+                    cpError.classList.remove('hidden');
+                    return;
+                }
+                if (newPw !== confirmPw) {
+                    cpError.textContent = 'New password and confirmation do not match.';
+                    cpError.classList.remove('hidden');
+                    return;
+                }
+                try {
+                    const supa = window.supabaseClient || window.supabase;
+                    if (!supa) { cpError.textContent = 'Supabase not initialized.'; cpError.classList.remove('hidden'); return; }
+                    // Re-authenticate using current password if provided (recommended)
+                    const { data: userData, error: userErr } = await supa.auth.getUser();
+                    if (userErr || !userData || !userData.user) { cpError.textContent = 'Unable to fetch current user.'; cpError.classList.remove('hidden'); return; }
+                    const email = userData.user.email;
+                    if (currentPw) {
+                        const { error: reauthErr } = await supa.auth.signInWithPassword({ email, password: currentPw });
+                        if (reauthErr) { cpError.textContent = 'Current password is incorrect.'; cpError.classList.remove('hidden'); return; }
+                    }
+                    const { error: updErr } = await supa.auth.updateUser({ password: newPw });
+                    if (updErr) { cpError.textContent = updErr.message || 'Failed to update password.'; cpError.classList.remove('hidden'); return; }
+                    cpSuccess.textContent = 'Password updated. Please log in again.';
+                    cpSuccess.classList.remove('hidden');
+                    // Sign out after short delay
+                    setTimeout(async () => {
+                        try { await supa.auth.signOut(); } catch(_) {}
+                        window.location.href = 'admin-login.html';
+                    }, 1000);
+                } catch (err) {
+                    cpError.textContent = 'Unexpected error updating password.';
+                    cpError.classList.remove('hidden');
+                }
+            });
+        }
+        })();
+        // --- Data Mockup (expanded) ---
+        // These are fallback mock data in case the DB connection fails, but the code relies on loadRoutes()
+        const busScheduleData = [
+            { 
+                busNo: 'VT-01', route: 'Chennai Central (Mock)', 
+                schedule: {
+                    Sunday: { departureTime: '09:00', eta: '09:45' },
+                    Monday: { departureTime: '08:00', eta: '08:45' },
+                    Tuesday: { departureTime: '08:00', eta: '08:45' },
+                    Wednesday: { departureTime: '08:00', eta: '08:45' },
+                    Thursday: { departureTime: '08:00', eta: '08:45' },
+                    Friday: { departureTime: '08:00', eta: '08:45' },
+                    Saturday: { departureTime: '08:30', eta: '09:15'},
+                },
+                stops: [
+                    { name: 'Vel Tech University', time: '08:00' },
+                    { name: 'Avadi', time: '08:15' },
+                    { name: 'Chennai Central', time: '09:15' }
+                ],
+                isUserAdded: false
+            }
+        ];
+        
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        let adminNotes = "Loading notes...";
+        let addedRoutesData = [];
+        
+        // --- Persistence Keys ---
+        const STORAGE_KEYS = {
+            notes: 'vt_admin_notes',
+            routes: 'vt_added_routes'
+        };
+        
+        // --- DOM Elements ---
+        const modeToggleBtn = document.getElementById('mode-toggle-btn');
+        const dashboardTab = document.getElementById('dashboard-tab');
+        const scheduleTab = document.getElementById('schedule-tab');
+        const manageTab = document.getElementById('manage-tab');
+        const loginsTab = document.getElementById('logins-tab');
+        const logoutBtn = document.getElementById('logout-btn');
+        const logo = document.getElementById('logo');
+        const siteTitle = document.getElementById('site-title');
+
+        const dashboardSection = document.getElementById('dashboard-section');
+        const scheduleSection = document.getElementById('schedule-section');
+        const manageSection = document.getElementById('manage-section');
+        const loginsSection = document.getElementById('logins-section');
+
+        const scheduleTableBody = document.getElementById('schedule-table-body');
+        const addBusForm = document.getElementById('add-bus-form');
+        const scheduleDateInput = document.getElementById('schedule-date');
+        const currentTimeEl = document.getElementById('current-time');
+        const activeBusesCountEl = document.getElementById('active-buses-count');
+        const onTimeCountEl = document.getElementById('on-time-count');
+        const tripsTodayCountEl = document.getElementById('trips-today-count');
+        const userRoutesTableBody = document.getElementById('user-routes-table-body');
+        const weeklyDatesContainer = document.getElementById('weekly-dates-container');
+        const loginLogsTbody = document.getElementById('login-logs-tbody');
+        const refreshLogsBtn = document.getElementById('refresh-logs');
+        const clearLogsBtn = document.getElementById('clear-logs');
+
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const messageOkBtn = document.getElementById('message-ok');
+        
+        const stopsModal = document.getElementById('stops-modal');
+        const stopsModalTitle = document.getElementById('stops-modal-title');
+        const stopsTableBody = document.getElementById('stops-table-body');
+        const closeStopsModal = document.getElementById('close-stops-modal');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Change Password Elements
+        const changePasswordBtn = document.getElementById('change-password-btn');
+        const changePasswordModal = document.getElementById('change-password-modal');
+        const closeChangePasswordModalBtn = document.getElementById('close-change-password-modal');
+        const changePasswordForm = document.getElementById('change-password-form');
+        const cpCurrent = document.getElementById('cp-current');
+        const cpNew = document.getElementById('cp-new');
+        const cpConfirm = document.getElementById('cp-confirm');
+        const cpError = document.getElementById('cp-error');
+        const cpSuccess = document.getElementById('cp-success');
+        const cpCancel = document.getElementById('cp-cancel');
+
+        // Immediately hide modal on page load
+        if (stopsModal) {
+            stopsModal.classList.add('hidden');
+        }
+
+        const busNumberInput = document.getElementById('bus-number');
+        const routeNameInput = document.getElementById('route-name');
+        const departureTimeInput = document.getElementById('departure-time');
+        const etaInput = document.getElementById('eta');
+        const departureAmPm = document.getElementById('departure-ampm');
+        const etaAmPm = document.getElementById('eta-ampm');
+        
+        const stopsDataTextarea = document.getElementById('stops-data');
+        const stopsBuilder = document.getElementById('stops-builder');
+        const addStopBtn = document.getElementById('add-stop-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        const adminNotesDisplay = document.getElementById('admin-notes-display');
+        const adminNotesTextarea = document.getElementById('admin-notes-textarea');
+        const editNotesBtn = document.getElementById('edit-notes-btn');
+        const saveNotesBtn = document.getElementById('save-notes-btn');
+
+        let isEditing = false;
+        let editingIndex = -1;
+        let suppressTopLevelSync = false;
+        let isNotesEditing = false;
+        
+        // --- Persistence Keys ---
+        const ADMIN_STORAGE = {
+            studentLoginLogs: 'vt_student_login_logs',
+            adminAuth: 'vt_admin_authed'
+        };
+        const ADMIN_ALLOWED_UID = '8bd75827-1bcb-45eb-8aa2-1ff722ee6ddc';
+
+        // --- Functions ---
+        
+        /**
+         * Shows the loading spinner.
+         */
+        function showLoading() {
+            loadingSpinner.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the loading spinner.
+         */
+        function hideLoading() {
+            loadingSpinner.classList.add('hidden');
+        }
+
+        /**
+         * Hides all content sections.
+         */
+        function hideAllSections() {
+            dashboardSection.classList.add('hidden');
+            scheduleSection.classList.add('hidden');
+            manageSection.classList.add('hidden');
+            loginsSection.classList.add('hidden');
+        }
+
+        // --- Form UX: Enter key navigation and time syncing ---
+        function focusNextFormControl(fromEl) {
+            const controls = Array.from(addBusForm.querySelectorAll('input, button, textarea, select'))
+                .filter(el => !el.disabled && el.type !== 'hidden' && el.offsetParent !== null);
+            const idx = controls.indexOf(fromEl);
+            if (idx >= 0 && idx < controls.length - 1) {
+                controls[idx + 1].focus();
+            }
+        }
+
+        if (addBusForm) {
+            addBusForm.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                const target = e.target;
+                if (!(target instanceof HTMLElement)) return;
+                // If focus is on the submit button, allow normal submit
+                if (
+                    target.id === 'submit-btn' ||
+                    (target.tagName === 'BUTTON' && ((target).type === 'submit' || target.getAttribute('type') === 'submit'))
+                ) {
+                    return;
+                }
+                // Prevent premature submit elsewhere
+                e.preventDefault();
+
+                // Stop-row specific navigation
+                const row = target.closest('.stop-row');
+                if (row) {
+                    if (target.classList.contains('stop-name')) {
+                        const t = row.querySelector('.stop-time');
+                        if (t) { t.focus(); return; }
+                    } else if (target.classList.contains('stop-time')) {
+                        const a = row.querySelector('.stop-ampm');
+                        if (a) { a.focus(); return; }
+                    } else if (target.classList.contains('stop-ampm')) {
+                        const next = row.nextElementSibling && row.nextElementSibling.classList.contains('stop-row')
+                            ? row.nextElementSibling
+                            : null;
+                        if (next) {
+                            const nextName = next.querySelector('.stop-name');
+                            if (nextName) { nextName.focus(); return; }
+                        } else {
+                            // Add a new row and focus its name
+                            addStopRow('', '');
+                            const rows = stopsBuilder.querySelectorAll('.stop-row');
+                            const last = rows[rows.length - 1];
+                            const nameEl = last?.querySelector('.stop-name');
+                            if (nameEl) { nameEl.focus(); return; }
+                        }
+                    }
+                }
+
+                // Generic navigation through main controls
+                focusNextFormControl(target);
+            });
+        }
+
+        // When top-level times change, push to first/last stop to keep consistent
+        function pushDepartureToFirstStop() {
+            if (!stopsBuilder) return;
+            const rows = Array.from(stopsBuilder.querySelectorAll('.stop-row'));
+            if (rows.length === 0) { addStopRow('', ''); }
+            const allRows = Array.from(stopsBuilder.querySelectorAll('.stop-row'));
+            const first = allRows[0];
+            const dep12 = (departureTimeInput?.value || '').slice(0,5);
+            const depAm = (departureAmPm?.value || 'AM');
+            if (first) {
+                const ft = first.querySelector('.stop-time');
+                const fa = first.querySelector('.stop-ampm');
+                if (ft) ft.value = dep12;
+                if (fa) fa.value = depAm;
+            }
+            suppressTopLevelSync = true;
+            updateStopsTextarea();
+            suppressTopLevelSync = false;
+        }
+
+        function pushEtaToLastStop() {
+            if (!stopsBuilder) return;
+            const rows = Array.from(stopsBuilder.querySelectorAll('.stop-row'));
+            if (rows.length === 0) { addStopRow('', ''); }
+            const allRows = Array.from(stopsBuilder.querySelectorAll('.stop-row'));
+            const last = allRows[allRows.length - 1];
+            const eta12 = (etaInput?.value || '').slice(0,5);
+            const etaAm = (etaAmPm?.value || 'AM');
+            if (last) {
+                const lt = last.querySelector('.stop-time');
+                const la = last.querySelector('.stop-ampm');
+                if (lt) lt.value = eta12;
+                if (la) la.value = etaAm;
+            }
+            suppressTopLevelSync = true;
+            updateStopsTextarea();
+            suppressTopLevelSync = false;
+        }
+
+        if (departureTimeInput) {
+            departureTimeInput.addEventListener('change', pushDepartureToFirstStop);
+            departureTimeInput.addEventListener('input', pushDepartureToFirstStop);
+        }
+        if (etaInput) {
+            etaInput.addEventListener('change', pushEtaToLastStop);
+            etaInput.addEventListener('input', pushEtaToLastStop);
+        }
+        if (departureAmPm) {
+            departureAmPm.addEventListener('change', pushDepartureToFirstStop);
+            departureAmPm.addEventListener('input', pushDepartureToFirstStop);
+        }
+        if (etaAmPm) {
+            etaAmPm.addEventListener('change', pushEtaToLastStop);
+            etaAmPm.addEventListener('input', pushEtaToLastStop);
+        }
+
+        function redirectToExternalMap() {
+            const lat = 13.177470064893306;
+            const lng = 80.09811982470028;
+            const url = `https://www.google.com/maps?q=${lat},${lng}`;
+            try { window.open(url, '_blank'); } catch(_) { }
+        }
+
+        // Initializes the Leaflet map for the college location (id: 'college-map')
+        function initCollegeMap() {
+            try {
+                const mapEl = document.getElementById('college-map');
+                if (!mapEl || !window.L) { return; }
+                // Ensure container has some height in case CSS hasn't applied
+                if (!mapEl.style.height || mapEl.clientHeight === 0) {
+                    mapEl.style.height = '14rem';
+                }
+                // Avoid re-initializing if already created
+                if (window._collegeMap) {
+                    try {
+                        window._collegeMap.setView([13.177470064893306, 80.09811982470028], 16);
+                        if (window._collegeMarker) {
+                            window._collegeMarker.setLatLng([13.177470064893306, 80.09811982470028]);
+                        }
+                        window._collegeMap.off('click');
+                        window._collegeMap.on('click', redirectToExternalMap);
+                        setTimeout(() => window._collegeMap.invalidateSize(), 0);
+                    } catch(_) {}
+                    return;
+                }
+
+                const lat = 13.177470064893306;
+                const lng = 80.09811982470028;
+
+                const map = window.L.map('college-map', { zoomControl: true });
+                window._collegeMap = map;
+                map.setView([lat, lng], 16);
+                map.on('click', redirectToExternalMap);
+
+                window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                window._collegeMarker = window.L.marker([lat, lng]).addTo(map).bindPopup('Vel Tech University');
+
+                // Ensure proper sizing after being shown
+                try { setTimeout(() => map.invalidateSize(), 0); } catch(_) {}
+            } catch (e) {
+                try { console.warn('initCollegeMap error', e); } catch(_) {}
+            }
+        }
+
+        // Change Password modal helpers
+        function openChangePasswordModal() {
+            cpError.classList.add('hidden');
+            cpSuccess.classList.add('hidden');
+            cpCurrent.value = '';
+            cpNew.value = '';
+            cpConfirm.value = '';
+            changePasswordModal.classList.remove('hidden');
+        }
+        function closeChangePasswordModal() {
+            changePasswordModal.classList.add('hidden');
+        }
+        function formatDateTime(iso) {
+            try {
+                const d = new Date(iso);
+                return d.toLocaleString('en-IN', { hour12: true });
+            } catch (e) { return iso; }
+        }
+
+        async function loadLoginLogs() {
+            loginLogsTbody.innerHTML = '<tr><td colspan="4" class="py-3 px-6 text-center text-gray-400">Loading login logs...</td></tr>';
+            // Prefer Supabase if configured
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('student_logins')
+                        .select('email, student_id, login_at')
+                        .order('login_at', { ascending: false });
+                    if (!error && Array.isArray(data)) {
+                        if (data.length === 0) {
+                            loginLogsTbody.innerHTML = `<tr><td colspan="4" class="py-3 px-6 text-center text-gray-400">No login activity yet.</td></tr>`;
+                            return;
+                        }
+                        loginLogsTbody.innerHTML = '';
+                        data.forEach((log, idx) => {
+                            const tr = document.createElement('tr');
+                            tr.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100', 'transition-colors', 'duration-200');
+                            tr.innerHTML = `
+                                <td class="py-3 px-6">${idx + 1}</td>
+                                <td class="py-3 px-6">${log.email || ''}</td>
+                                <td class="py-3 px-6">${log.student_id || ''}</td>
+                                <td class="py-3 px-6">${formatDateTime(log.login_at)}</td>
+                            `;
+                            loginLogsTbody.appendChild(tr);
+                        });
+                        return;
+                    }
+                } catch (e) { console.error("Error loading logs:", e); }
+            }
+            loginLogsTbody.innerHTML = `<tr><td colspan="4" class="py-3 px-6 text-center text-red-600">Failed to load logs. Database error.</td></tr>`;
+        }
+
+        async function clearLoginLogs() {
+            if (window.supabaseClient) {
+                try {
+                    const { error } = await window.supabaseClient.from('student_logins').delete().neq('student_id', null);
+                    if (!error) { loadLoginLogs(); return; }
+                } catch (e) {}
+            }
+            showMessage('Could not clear logs. Supabase connection required.');
+        }
+
+        async function logoutAdmin() {
+            try { hideStopsModal(); } catch (e) {}
+            try {
+                // Supabase Sign Out
+                if (window.supabaseClient) { await window.supabaseClient.auth.signOut(); }
+                // Clear any local auth remnants
+                localStorage.removeItem(ADMIN_STORAGE.adminAuth); 
+            } catch (e) { try { console.error('Supabase signOut error', e); } catch(_){} }
+            window.location.href = 'admin-login.html';
+        }
+
+        /**
+         * Populates the bus schedule table based on the selected date.
+         */
+        function formatTimeDisplay(hhmm) {
+            try {
+                if (!hhmm) return '';
+                const [h, m] = hhmm.split(':');
+                let hour = parseInt(h, 10);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                hour = hour % 12; if (hour === 0) hour = 12;
+                return `${hour.toString().padStart(1,'0')}:${(m||'00').padStart(2,'0')} ${ampm}`;
+            } catch { return hhmm; }
+        }
+
+        // Convert 12h input + AM/PM to 24h HH:MM
+        function to24h(hhmm, ampm) {
+            try {
+                if (!hhmm) return '';
+                let [h, m] = hhmm.split(':');
+                let hour = parseInt(h, 10);
+                if (isNaN(hour)) return hhmm;
+                hour = hour % 12; // 12 -> 0 base before AM/PM add
+                if ((ampm || 'AM').toUpperCase() === 'PM') hour += 12;
+                return `${hour.toString().padStart(2,'0')}:${(m||'00').padStart(2,'0')}`;
+            } catch { return hhmm; }
+        }
+
+        // For a stored 24h HH:MM, return AM/PM and also a 12h display hour if needed
+        function getAmPmFrom24h(hhmm) {
+            try {
+                if (!hhmm) return 'AM';
+                const [h] = hhmm.split(':');
+                const hour = parseInt(h, 10);
+                return hour >= 12 ? 'PM' : 'AM';
+            } catch { return 'AM'; }
+        }
+
+        // For a 24h HH:MM, return 12h HH:MM (no AM/PM label)
+        function to12hNoAmPm(hhmm) {
+            try {
+                if (!hhmm) return '';
+                const [h, m] = hhmm.split(':');
+                let hour = parseInt(h, 10);
+                if (isNaN(hour)) return hhmm;
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                hour = hour % 12; if (hour === 0) hour = 12;
+                return `${hour.toString().padStart(2,'0')}:${(m||'00').padStart(2,'0')}`;
+            } catch { return hhmm; }
+        }
+
+        function populateScheduleTable(selectedDate) {
+            scheduleTableBody.innerHTML = '';
+            const dayOfWeek = daysOfWeek[selectedDate.getDay()];
+            
+            const allBusData = [...busScheduleData, ...addedRoutesData];
+
+            if (allBusData.length === 0) {
+                 scheduleTableBody.innerHTML = `<tr><td colspan="4" class="py-3 px-6 text-center text-gray-400">No schedules available for this day.</td></tr>`;
+                 return;
+            }
+
+            allBusData.forEach(bus => {
+                const schedule = bus.schedule[dayOfWeek];
+                if (schedule) {
+                    const row = document.createElement('tr');
+                    row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100', 'transition-colors', 'duration-200', 'cursor-pointer');
+                    row.setAttribute('data-bus-no', bus.busNo);
+                    row.setAttribute('data-is-added', bus.isUserAdded ? 'true' : 'false');
+                    row.innerHTML = `
+                        <td class="py-3 px-6">${bus.busNo}</td>
+                        <td class="py-3 px-6">${bus.route}</td>
+                        <td class="py-3 px-6">${formatTimeDisplay(schedule.departureTime)}</td>
+                        <td class="py-3 px-6">${formatTimeDisplay(schedule.eta)}</td>
+                    `;
+                    scheduleTableBody.appendChild(row);
+                }
+            });
+        }
+            /**
+         * Populates the table with user-added routes.
+         */
+        function populateUserRoutesTable() {
+            userRoutesTableBody.innerHTML = '';
+            
+            if (addedRoutesData.length === 0) {
+                userRoutesTableBody.innerHTML = `<tr><td colspan="6" class="py-3 px-6 text-center text-gray-400">No routes added yet.</td></tr>`;
+                return;
+            }
+                
+            addedRoutesData.forEach((route, index) => {
+                const stopsHTML = route.stops.map(stop => `${stop.name} (${formatTimeDisplay(stop.time)})`).join('<br>');
+                const row = document.createElement('tr');
+                row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100', 'transition-colors', 'duration-200');
+
+                // Get first stop time as departure and last stop time as ETA (from stops array)
+                const departureTime = route.stops[0] ? route.stops[0].time : 'N/A';
+                const etaTime = route.stops[route.stops.length - 1] ? route.stops[route.stops.length - 1].time : 'N/A';
+
+                row.innerHTML = `
+                    <td class="py-3 px-6">${route.busNo}</td>
+                    <td class="py-3 px-6">${route.route}</td>
+                    <td class="py-3 px-6">${formatTimeDisplay(departureTime)}</td>
+                    <td class="py-3 px-6">${formatTimeDisplay(etaTime)}</td>
+                    <td class="py-3 px-6 text-sm">${stopsHTML}</td>
+                    <td class="py-3 px-6 space-x-2">
+                        <button class="edit-btn bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-xs" data-index="${index}">Edit</button>
+                        <button class="remove-btn bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs" data-index="${index}" data-bus-no="${route.busNo}">Remove</button>
+                    </td>
+                `;
+                userRoutesTableBody.appendChild(row);
+            });
+            
+            // Add event listeners to new remove buttons
+            document.querySelectorAll('.remove-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    const busNo = e.target.getAttribute('data-bus-no');
+                    removeBusRoute(index, busNo);
+                });
+            });
+            
+            // Add event listeners to new edit buttons
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    editBusRoute(index);
+                });
+            });
+        }
+        
+        /**
+         * Removes a bus route by index.
+         * @param {number} index The index of the route to remove.
+         */
+        async function removeBusRoute(index, busNo) {
+            if (!busNo) return;
+            if (!window.supabaseClient) { showMessage('Supabase connection required to remove routes.'); return; }
+
+            showLoading();
+            try {
+                // First attempt: direct delete (works if FK has ON DELETE CASCADE)
+                const { error: delErr } = await window.supabaseClient
+                    .from('bus_routes')
+                    .delete()
+                    .eq('route_number', busNo);
+
+                if (delErr) {
+                    // Fallback: manually delete dependent stops, then the route
+                    // 1) Find route id by route_number
+                    const { data: routeRows, error: selErr } = await window.supabaseClient
+                        .from('bus_routes')
+                        .select('id')
+                        .eq('route_number', busNo)
+                        .limit(1);
+                    if (selErr) throw selErr;
+                    const routeId = Array.isArray(routeRows) && routeRows.length ? routeRows[0].id : null;
+                    if (!routeId) throw delErr; // nothing to delete or unexpected error
+
+                    // 2) Delete dependent route_stops
+                    const { error: stopDelErr } = await window.supabaseClient
+                        .from('route_stops')
+                        .delete()
+                        .eq('route_id', routeId);
+                    if (stopDelErr) throw stopDelErr;
+
+                    // 3) Delete the route by id
+                    const { error: routeDelErr } = await window.supabaseClient
+                        .from('bus_routes')
+                        .delete()
+                        .eq('id', routeId);
+                    if (routeDelErr) throw routeDelErr;
+                }
+
+                // Update local state and UI
+                addedRoutesData.splice(index, 1);
+                populateUserRoutesTable();
+                const dateForTable = scheduleDateInput.value ? new Date(scheduleDateInput.value) : new Date();
+                populateScheduleTable(dateForTable);
+                showMessage('Bus route removed successfully.');
+
+            } catch (e) {
+                console.error('DB delete error', e);
+                const msg = (e && (e.details || e.message)) || 'Database Error';
+                showMessage(`Failed to remove route in database: ${msg}.`);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        /**
+         * Edits a bus route by index.
+         * @param {number} index The index of the route to edit.
+         */
+        function editBusRoute(index) {
+            const busToEdit = addedRoutesData[index];
+            if (!busToEdit) {
+                return;
+            }
+
+            isEditing = true;
+            editingIndex = index;
+            submitBtn.textContent = 'Save Changes';
+            submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            
+            busNumberInput.value = busToEdit.busNo;
+            routeNameInput.value = busToEdit.route;
+            
+            // Populate departure/eta from the first/last stop in the route, using the stop data
+            const departureTime = busToEdit.stops[0] ? busToEdit.stops[0].time : '00:00';
+            const etaTime = busToEdit.stops[busToEdit.stops.length - 1] ? busToEdit.stops[busToEdit.stops.length - 1].time : '00:00';
+
+            // Populate form fields with 24h time strings (HH:MM)
+            departureTimeInput.value = departureTime;
+            etaInput.value = etaTime;
+
+            // Rebuild stops builder
+            if (stopsBuilder) { stopsBuilder.innerHTML = ''; }
+            busToEdit.stops.forEach(s => addStopRow(s.name || '', s.time || ''));
+            updateStopsTextarea();
+        }
+        
+        /**
+         * Updates the current time displayed on the page.
+         */
+        function updateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            currentTimeEl.textContent = now.toLocaleDateString('en-IN', options);
+        }
+
+        // --- Dashboard Stats ---
+        function getTodayScheduleCount() {
+            try {
+                const today = new Date();
+                const dayOfWeek = daysOfWeek[today.getDay()];
+                const allBusData = [...busScheduleData, ...addedRoutesData];
+                let count = 0;
+                allBusData.forEach(b => { if (b && b.schedule && b.schedule[dayOfWeek]) count++; });
+                return count;
+            } catch (_) { return 0; }
+        }
+
+        async function refreshDashboardStats() {
+            // Active buses from Supabase bus_positions (unique bus_no)
+            let active = 0;
+            // On-time departures computed using scheduled departure for today vs recent position timestamps
+            let onTime = 0;
+            const allBusData = [...busScheduleData, ...addedRoutesData];
+
+            // Helper: parse schedule time string (supports 'HH:MM' 24h or 'HH:MM AM/PM') into a Date today
+            function parseScheduleTimeToDate(timeStr) {
+                try {
+                    if (!timeStr) return null;
+                    const now = new Date();
+                    const yyyy = now.getFullYear();
+                    const mm = now.getMonth();
+                    const dd = now.getDate();
+                    let h = 0, m = 0;
+                    const ampmMatch = /\s*(AM|PM)\s*$/i.exec(timeStr);
+                    if (ampmMatch) {
+                        const [hh, mi] = timeStr.replace(/\s*(AM|PM)\s*$/i, '').split(':');
+                        h = parseInt(hh, 10) || 0; m = parseInt(mi, 10) || 0;
+                        const isPM = ampmMatch[1].toUpperCase() === 'PM';
+                        h = h % 12 + (isPM ? 12 : 0);
+                    } else {
+                        const [hh, mi] = timeStr.split(':');
+                        h = parseInt(hh, 10) || 0; m = parseInt(mi, 10) || 0;
+                    }
+                    return new Date(yyyy, mm, dd, h, m, 0, 0);
+                } catch (_) { return null; }
+            }
+
+            // Fetch positions once (bus_no, updated_at)
+            let positions = [];
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('bus_positions')
+                        .select('bus_no, updated_at');
+                    if (!error && Array.isArray(data)) positions = data;
+                } catch (_) {}
+            }
+
+            // Active = unique bus_no present
+            try { const s = new Set(); positions.forEach(r => r && r.bus_no && s.add(r.bus_no)); active = s.size; } catch(_) {}
+            try { if (activeBusesCountEl) activeBusesCountEl.textContent = String(active); } catch(_) {}
+
+            // On-time calculation: for each bus with today's schedule, if there's a position updated within
+            // [depTime - 5 min, depTime + 10 min], consider it on-time.
+            try {
+                const dayOfWeek = daysOfWeek[new Date().getDay()];
+                const byBusNo = new Map(); positions.forEach(p => { if (p && p.bus_no) byBusNo.set(p.bus_no, p); });
+                const windowBeforeMs = 5 * 60 * 1000;  // 5 minutes before
+                const windowAfterMs  = 10 * 60 * 1000; // 10 minutes after
+                onTime = 0;
+                allBusData.forEach(b => {
+                    try {
+                        if (!b || !b.busNo || !b.schedule || !b.schedule[dayOfWeek]) return;
+                        const sched = b.schedule[dayOfWeek];
+                        const dep = parseScheduleTimeToDate(sched.departureTime);
+                        if (!dep) return;
+                        const pos = byBusNo.get(b.busNo);
+                        if (!pos || !pos.updated_at) return;
+                        const upd = new Date(pos.updated_at);
+                        const diff = upd.getTime() - dep.getTime();
+                        if (diff >= -windowBeforeMs && diff <= windowAfterMs) onTime++;
+                    } catch(_) {}
+                });
+            } catch(_) { onTime = 0; }
+            try { if (onTimeCountEl) onTimeCountEl.textContent = String(onTime); } catch(_) {}
+
+            // Trips Today (Total scheduled for today)
+            try { 
+                const count = getTodayScheduleCount();
+                if (tripsTodayCountEl) tripsTodayCountEl.textContent = String(count);
+            } catch(_) {}
+        }
+        
+        /**
+         * Displays a custom message box.
+         * @param {string} message The message to display.
+         */
+        function showMessage(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the custom message box.
+         */
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        // --- Admin Notes: Edit/Save wired to Supabase ---
+        function setNotesEditing(state) {
+            isNotesEditing = !!state;
+            try { if (adminNotesDisplay) adminNotesDisplay.classList.toggle('hidden', isNotesEditing); } catch(_) {}
+            try { if (adminNotesTextarea) adminNotesTextarea.classList.toggle('hidden', !isNotesEditing); } catch(_) {}
+            try { if (saveNotesBtn) saveNotesBtn.classList.toggle('hidden', !isNotesEditing); } catch(_) {}
+            try { if (editNotesBtn) editNotesBtn.classList.toggle('hidden', isNotesEditing); } catch(_) {}
+            if (isNotesEditing && adminNotesTextarea) {
+                try { adminNotesTextarea.focus(); adminNotesTextarea.setSelectionRange(adminNotesTextarea.value.length, adminNotesTextarea.value.length); } catch(_) {}
+            }
+        }
+
+        if (editNotesBtn) {
+            editNotesBtn.addEventListener('click', () => {
+                try { adminNotesTextarea.value = (adminNotesDisplay?.textContent || '').trim(); } catch(_) {}
+                setNotesEditing(true);
+            });
+        }
+
+        if (saveNotesBtn) {
+            saveNotesBtn.addEventListener('click', async () => {
+                const content = (adminNotesTextarea?.value || '').trim();
+                if (!content) { showMessage('Please enter a note before saving.'); return; }
+                if (!window.supabaseClient) { showMessage('Supabase is not configured.'); return; }
+                try {
+                    const ok = await ensureSupabaseAdminAuth();
+                    if (!ok) { showMessage('Please sign in as an authorized admin to save notes.'); return; }
+                    const { error } = await window.supabaseClient
+                        .from('admin_notes')
+                        .insert([{ title: 'Special Notice', content }]);
+                    if (error) throw error;
+                    try { if (adminNotesDisplay) adminNotesDisplay.textContent = content; } catch(_) {}
+                    try { localStorage.setItem('vt_admin_notes', content); } catch(_) {}
+                    setNotesEditing(false);
+                    showMessage('Admin note saved successfully.');
+                } catch (e) {
+                    const msg = (e && (e.details || e.message)) || 'Failed to save note.';
+                    showMessage(msg);
+                }
+            });
+        }
+        
+        /**
+         * Displays the modal with bus stops in a table.
+         * @param {string} busNo The bus number to show stops for.
+         * @param {boolean} isUserAdded True if the bus is user-added, false otherwise.
+         */
+        function showStops(busNo, isUserAdded) {
+            let bus = null;
+            if (isUserAdded) {
+                bus = addedRoutesData.find(b => b.busNo === busNo);
+            } else {
+                bus = busScheduleData.find(b => b.busNo === busNo);
+            }
+
+            if (bus && bus.stops) {
+                stopsModalTitle.textContent = `Stops for Bus ${busNo}`;
+                stopsTableBody.innerHTML = ''; // Clear previous data
+                bus.stops.forEach(stop => {
+                    const row = document.createElement('tr');
+                    row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100', 'transition-colors', 'duration-200');
+                    row.innerHTML = `
+                        <td class="py-3 px-6">${stop.name}</td>
+                        <td class="py-3 px-6">${formatTimeDisplay(stop.time)}</td>
+                    `;
+                    stopsTableBody.appendChild(row);
+                });
+                stopsModal.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Hides the stops modal.
+         */
+        function hideStopsModal() {
+            if (stopsModal) {
+                stopsModal.classList.add('hidden');
+                console.log('Modal hidden');
+            }
+        }
+        // Allow closing the stops modal by clicking the backdrop
+        if (stopsModal) {
+            stopsModal.addEventListener('click', (e) => {
+                if (e.target === stopsModal) {
+                    hideStopsModal();
+                }
+            });
+        }
+        // Allow closing the stops modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideStopsModal();
+            }
+        });
+        
+        /**
+         * Parses the stops data from the textarea input.
+         * @param {string} stopsString The string from the stops-data textarea.
+         * @returns {Array<Object>} An array of stop objects.
+         */
+        function parseStops(stopsString) {
+             const stops = [];
+             const stopsArray = stopsString.split(';').map(s => s.trim()).filter(s => s.length > 0);
+             stopsArray.forEach(stopStr => {
+                 const parts = stopStr.split(',').map(p => p.trim());
+                 if (parts.length === 2) {
+                     // Store time in 24h format for internal consistency
+                     const time24h = parts[1].toUpperCase().includes('A') || parts[1].toUpperCase().includes('P') ? parts[1].replace(/\s*(AM|PM)\s*$/i, '').trim() : parts[1];
+                     stops.push({ name: parts[0], time: time24h });
+                 }
+             });
+             return stops;
+        }
+
+        // --- Stops Builder UI ---
+        function updateStopsTextarea() {
+            try {
+                const rows = stopsBuilder ? Array.from(stopsBuilder.querySelectorAll('.stop-row')) : [];
+                const parts = [];
+                rows.forEach(row => {
+                    const name = row.querySelector('.stop-name')?.value?.trim() || '';
+                    const time12 = row.querySelector('.stop-time')?.value?.trim() || '';
+                    const ampmSel = row.querySelector('.stop-ampm');
+                    const ampm = ampmSel ? (ampmSel.value || 'AM') : 'AM';
+                    const time24 = to24h(time12, ampm);
+                    if (name && time24) { parts.push(`${name},${time24}`); }
+                });
+                if (stopsDataTextarea) { stopsDataTextarea.value = parts.join('; '); }
+                // Keep top-level departure/ETA inputs in sync with first/last stop times unless suppressed
+                if (!suppressTopLevelSync) {
+                    try { syncDepartureEtaWithStops(); } catch(_) {}
+                }
+            } catch(_) {}
+        }
+
+        // Keep departure/ETA inputs synced with the first and last stop times
+        function syncDepartureEtaWithStops() {
+            if (!stopsBuilder) return;
+            const rows = Array.from(stopsBuilder.querySelectorAll('.stop-row'));
+            if (rows.length === 0) return;
+            const firstRowTime = rows[0].querySelector('.stop-time')?.value?.slice(0,5) || '';
+            const firstRowAmPm = rows[0].querySelector('.stop-ampm')?.value || 'AM';
+            const lastRowTime = rows[rows.length - 1].querySelector('.stop-time')?.value?.slice(0,5) || '';
+            const lastRowAmPm = rows[rows.length - 1].querySelector('.stop-ampm')?.value || 'AM';
+            if (departureTimeInput && firstRowTime) {
+                departureTimeInput.value = firstRowTime;
+            }
+            if (departureAmPm && firstRowAmPm) {
+                departureAmPm.value = firstRowAmPm;
+            }
+            if (etaInput && lastRowTime) {
+                etaInput.value = lastRowTime;
+            }
+            if (etaAmPm && lastRowAmPm) {
+                etaAmPm.value = lastRowAmPm;
+            }
+        }
+
+        function addStopRow(name = '', time = '') {
+            if (!stopsBuilder) return;
+            const row = document.createElement('div');
+            row.className = 'stop-row flex items-center gap-2';
+            // Convert incoming time (assumed 24h HH:MM) to 12h input + AM/PM select
+            const t24 = (time || '').slice(0,5);
+            const t12 = to12hNoAmPm(t24);
+            const ampm = getAmPmFrom24h(t24);
+            row.innerHTML = `
+                <input type="text" class="stop-name flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Stop name" value="${name.replace(/"/g,'&quot;')}">
+                <input type="time" class="stop-time w-28 px-2 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="${t12}">
+                <select class="stop-ampm w-20 px-2 py-2 border border-gray-300 rounded-md bg-white text-sm">
+                    <option value="AM" ${ampm==='AM'?'selected':''}>AM</option>
+                    <option value="PM" ${ampm==='PM'?'selected':''}>PM</option>
+                </select>
+                <button type="button" class="remove-stop px-2 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">✕</button>
+            `;
+            stopsBuilder.appendChild(row);
+            const onChange = () => updateStopsTextarea();
+            row.querySelector('.stop-name').addEventListener('input', onChange);
+            row.querySelector('.stop-time').addEventListener('input', onChange);
+            row.querySelector('.stop-ampm').addEventListener('change', onChange);
+            row.querySelector('.stop-ampm').addEventListener('input', onChange);
+            row.querySelector('.remove-stop').addEventListener('click', () => {
+                row.remove();
+                updateStopsTextarea();
+            });
+            updateStopsTextarea();
+        }
+
+        function rebuildStopsBuilderFromTextarea() {
+            if (!stopsBuilder) return;
+            stopsBuilder.innerHTML = '';
+            const stops = parseStops(stopsDataTextarea?.value || '');
+            if (stops.length === 0) {
+                addStopRow('', '');
+            } else {
+                stops.forEach(s => addStopRow(s.name || '', (s.time || '').slice(0,5)));
+            }
+            updateStopsTextarea();
+        }
+
+        // Initialize builder
+        if (addStopBtn) {
+            addStopBtn.addEventListener('click', () => addStopRow('', ''));
+        }
+        if (stopsBuilder) {
+            if (!stopsBuilder.childElementCount) { addStopRow('', ''); }
+            updateStopsTextarea();
+        }
+         
+         /**
+          * Initializes the admin notes display.
+          */
+         async function initializeAdminNotes() {
+            // Supabase-only load of latest note
+            adminNotes = 'Loading notes...';
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('admin_notes')
+                        .select('content, updated_at')
+                        .order('updated_at', { ascending: false })
+                        .limit(1);
+                    if (!error && Array.isArray(data) && data.length > 0) {
+                        adminNotes = data[0].content || '';
+                    } else {
+                         adminNotes = "Welcome Admin! Use this panel to post important messages for students.";
+                    }
+                } catch (e) { adminNotes = "Welcome Admin! Use this panel to post important messages for students."; }
+            }
+            adminNotesDisplay.textContent = adminNotes;
+         }
+
+         async function loadRoutes() {
+            // Supabase-only load of routes and stops
+            addedRoutesData = [];
+            if (!window.supabaseClient) return;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('bus_routes')
+                    .select('route_number, route_name, route_stops(sequence_order, estimated_arrival_time, bus_stops(stop_name))');
+                if (!error && Array.isArray(data)) {
+                    addedRoutesData = data.map(r => {
+                        const stopsArr = (r.route_stops || []).sort((a,b)=>a.sequence_order-b.sequence_order);
+                        const stops = stopsArr.map(s => ({ name: (s.bus_stops && s.bus_stops.stop_name) || '', time: (s.estimated_arrival_time || '').toString().slice(0,5) }));
+                        const dep = stopsArr.length ? (stopsArr[0].estimated_arrival_time || '').toString().slice(0,5) : '';
+                        const arr = stopsArr.length ? (stopsArr[stopsArr.length-1].estimated_arrival_time || '').toString().slice(0,5) : '';
+                        const sched = {};
+                        daysOfWeek.forEach(d=>{ sched[d]={ departureTime: dep, eta: arr }; });
+                        return { busNo: r.route_number, route: r.route_name, schedule: sched, stops, isUserAdded: true };
+                    });
+                }
+            } catch (e) { try { console.error('loadRoutes DB error', e); } catch(_){} }
+         }
+
+         function persistRoutes() { /* Supabase-only mode: no localStorage persistence */ }
+
+         async function syncRouteToDB(route) {
+            if (!window.supabaseClient) { window._lastRouteSyncError = 'Supabase client not initialized'; return false; }
+            const payload = { route_json: route };
+            let lastErr = null;
+            let authedOnce = false;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const { data, error } = await window.supabaseClient.rpc('sync_route', payload);
+                    if (error) throw error;
+                    window._lastRouteSyncError = '';
+                    return true;
+                } catch (e) {
+                    lastErr = e;
+                    const msg = (e && (e.message || e.details || '')) || '';
+                    const needsAuth = /not allowed|permission|jwt|auth|unauth/i.test(msg);
+                    if (needsAuth && !authedOnce) {
+                        const ok = await ensureSupabaseAdminAuth();
+                        authedOnce = true;
+                        if (ok) { continue; }
+                    }
+                    await new Promise(r => setTimeout(r, 300 * attempt));
+                }
+            }
+            window._lastRouteSyncError = (lastErr && (lastErr.message || String(lastErr))) || 'Unknown error';
+            return false;
+         }
+
+        async function ensureSupabaseAdminAuth() {
+            try {
+                const supa = window.supabaseClient;
+                if (!supa) return false;
+                let { data: userData } = await supa.auth.getUser();
+                let uid = userData && userData.user && userData.user.id ? userData.user.id : null;
+                if (uid && (!ADMIN_ALLOWED_UID || uid === ADMIN_ALLOWED_UID)) return true;
+                const email = window.prompt('Enter admin email to authenticate RPC:', '');
+                if (!email) return false;
+                const password = window.prompt('Enter admin password:', '');
+                if (!password) return false;
+                const { data, error } = await supa.auth.signInWithPassword({ email, password });
+                if (error) { try { showMessage(error.message || 'Sign-in failed'); } catch(_) {} return false; }
+                try { ({ data: userData } = await supa.auth.getUser()); uid = userData?.user?.id || null; } catch(_) {}
+                if (ADMIN_ALLOWED_UID && uid !== ADMIN_ALLOWED_UID) {
+                    showMessage('Signed-in user is not authorized for this operation.');
+                    return false;
+                }
+                return true;
+            } catch (_) { return false; }
+        }
+
+
+         /**
+          * Generates and displays the clickable weekly date buttons.
+          */
+         function generateWeeklyDates() {
+            weeklyDatesContainer.innerHTML = '';
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday...
+
+            // Start from Monday of the current week
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+            // Generate buttons for Monday to Saturday
+            for (let i = 0; i < 6; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                
+                const dayName = daysOfWeek[date.getDay()].substring(0, 3);
+                const dateNum = date.getDate();
+                const month = date.toLocaleString('default', { month: 'short' });
+                const fullDate = date.toISOString().split('T')[0];
+
+                const button = document.createElement('button');
+                button.classList.add('px-3', 'py-2', 'font-medium', 'text-gray-600', 'rounded-lg', 'hover:bg-gray-200', 'focus:outline-none', 'focus:bg-gray-200', 'transition-colors', 'duration-200', 'flex', 'flex-col', 'items-center', 'border', 'border-gray-300');
+                if (fullDate === today.toISOString().split('T')[0]) {
+                    button.classList.add('bg-gray-200');
+                }
+                button.dataset.date = fullDate;
+                button.innerHTML = `
+                    <span class="text-xs">${dayName}</span>
+                    <span class="text-sm font-bold">${dateNum}</span>
+                    <span class="text-xs">${month}</span>
+                `;
+                weeklyDatesContainer.appendChild(button);
+            }
+
+            // Add event listeners to the newly created buttons
+            weeklyDatesContainer.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    // Remove active state from all buttons
+                    weeklyDatesContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-gray-200'));
+                    // Add active state to the clicked button
+                    e.currentTarget.classList.add('bg-gray-200');
+                    const selectedDate = new Date(e.currentTarget.dataset.date);
+                    populateScheduleTable(selectedDate);
+                });
+            });
+         }
+
+
+        // --- Event Listeners ---
+        
+        function updateView() {
+            // No need to toggle, as we're always in admin mode
+        }
+
+        function setActiveTab(activeBtn) {
+            const tabs = [dashboardTab, scheduleTab, manageTab, loginsTab];
+            tabs.forEach(btn => {
+                if (!btn) return;
+                const isActive = btn === activeBtn;
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                btn.classList.toggle('bg-gray-200', isActive);
+                btn.classList.toggle('text-gray-800', isActive);
+                btn.classList.toggle('text-gray-600', !isActive);
+            });
+        }
+
+        // Dashboard open via branding clicks (no showDashboard function)
+        if (logo) { 
+            logo.addEventListener('click', () => {
+                hideAllSections();
+                dashboardSection.classList.remove('hidden');
+                try { initCollegeMap(); } catch(_) {}
+                try { refreshDashboardStats(); } catch(_) {}
+                try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_) {}
+                try { location.hash = '#dashboard'; } catch(_) {}
+            });
+        }
+        if (siteTitle) { 
+            siteTitle.addEventListener('click', () => {
+                hideAllSections();
+                dashboardSection.classList.remove('hidden');
+                try { initCollegeMap(); } catch(_) {}
+                try { refreshDashboardStats(); } catch(_) {}
+                try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_) {}
+                try { location.hash = '#dashboard'; } catch(_) {}
+            });
+        }
+
+        scheduleTab.addEventListener('click', () => {
+            hideAllSections();
+            scheduleSection.classList.remove('hidden');
+            generateWeeklyDates(); // Populate the weekly dates for students
+            populateScheduleTable(new Date()); // Load today's schedule by default
+            try { setActiveTab(scheduleTab); location.hash = '#schedule'; } catch(_) {}
+        });
+
+        manageTab.addEventListener('click', () => {
+            hideAllSections();
+            manageSection.classList.remove('hidden');
+            populateUserRoutesTable();
+            try { setActiveTab(manageTab); location.hash = '#manage'; } catch(_) {}
+        });
+
+        loginsTab.addEventListener('click', () => {
+            hideAllSections();
+            loginsSection.classList.remove('hidden');
+            loadLoginLogs();
+            try { setActiveTab(loginsTab); location.hash = '#logins'; } catch(_) {}
+        });
+
+        refreshLogsBtn.addEventListener('click', loadLoginLogs);
+        clearLogsBtn.addEventListener('click', () => {
+            clearLoginLogs();
+            showMessage('Login logs cleared');
+        });
+
+        if (logoutBtn) { logoutBtn.addEventListener('click', logoutAdmin); }
+
+        addBusForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            showLoading();
+            
+            const busNumber = busNumberInput.value;
+            const routeName = routeNameInput.value;
+            const departureTime = departureTimeInput.value; // HH:MM (input)
+            const eta = etaInput.value; // HH:MM (input)
+            const departureMeridiem = (departureAmPm && departureAmPm.value) ? departureAmPm.value : 'AM';
+            const etaMeridiem = (etaAmPm && etaAmPm.value) ? etaAmPm.value : 'AM';
+            const dep24 = to24h((departureTime || '').slice(0,5), departureMeridiem);
+            const eta24 = to24h((eta || '').slice(0,5), etaMeridiem);
+            
+            // Re-read stops from the builder UI
+            updateStopsTextarea();
+            const stopsData = stopsDataTextarea.value;
+            const parsedStops = parseStops(stopsData);
+
+            if (parsedStops.length === 0) {
+                hideLoading();
+                showMessage('Please add at least one stop to the route.');
+                return;
+            }
+            
+            // Auto-sync first and last stop times to match selected departure/ETA in 24h format
+            try {
+                parsedStops[0].time = dep24;
+                parsedStops[parsedStops.length - 1].time = eta24;
+            } catch(_) {}
+
+            const newOrUpdatedRoute = {
+                busNo: busNumber,
+                route: routeName,
+                schedule: {},
+                stops: parsedStops,
+                isUserAdded: true
+            };
+
+            // Populate schedule for all days of the week for the new route
+            daysOfWeek.forEach(day => {
+                newOrUpdatedRoute.schedule[day] = {
+                    departureTime: dep24,
+                    eta: eta24
+                };
+            });
+
+            setTimeout(async () => { // Use setTimeout to allow loading spinner to show
+                let message = '';
+                const synced = await syncRouteToDB(newOrUpdatedRoute);
+                
+                if (!synced) {
+                    hideLoading();
+                    showMessage('Failed to save route. Please ensure the Bus Number is unique and the database is configured correctly.');
+                    return;
+                }
+                
+                // Determine message based on editing state
+                if (isEditing) {
+                    message = `Bus route ${busNumber} updated successfully!`;
+                    isEditing = false;
+                    editingIndex = -1;
+                    submitBtn.textContent = 'Add Bus';
+                    submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                } else {
+                    message = `New bus route ${busNumber} added!`;
+                }
+                
+                // Refresh local data from DB after sync to ensure consistency (especially needed for cascade deletes/updates)
+                await loadRoutes(); 
+
+                showMessage(message);
+                
+                addBusForm.reset();
+                // Reset form fields and stops builder to blanks; admin will set times as needed
+                if (departureTimeInput) departureTimeInput.value = '';
+                if (etaInput) etaInput.value = '';
+                if (departureAmPm) departureAmPm.value = 'AM';
+                if (etaAmPm) etaAmPm.value = 'AM';
+                if (stopsBuilder) {
+                    stopsBuilder.innerHTML = '';
+                    addStopRow('', '');
+                    updateStopsTextarea();
+                }
+
+                populateUserRoutesTable();
+                const dateForTable = scheduleDateInput.value ? new Date(scheduleDateInput.value) : new Date();
+                populateScheduleTable(dateForTable);
+                hideLoading();
+                
+                try { refreshDashboardStats(); } catch(_) {}
+            }, 500);
+        });
+
+        
+
+        messageOkBtn.addEventListener('click', hideMessage);
+        
+        scheduleDateInput.addEventListener('change', (e) => {
+            populateScheduleTable(new Date(e.target.value));
+        });
+
+        scheduleTableBody.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            if (row) {
+                const busNo = row.getAttribute('data-bus-no');
+                const isUserAdded = row.getAttribute('data-is-added') === 'true';
+                showStops(busNo, isUserAdded);
+            }
+        });
+
+        closeStopsModal.addEventListener('click', hideStopsModal);
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Admin interface initializing...');
+            
+            try {
+                // FIX: Ensure modal is hidden on load (critical fix)
+                hideStopsModal();
+                console.log('Modal hidden on load');
+                
+                // Load any saved routes
+                await loadRoutes();
+                console.log('Routes loaded');
+
+                // Display the dashboard by default
+                dashboardSection.classList.remove('hidden');
+                initCollegeMap();
+                // Initial KPI refresh and periodic updates (visibility-aware)
+                try { refreshDashboardStats(); } catch(_) {}
+                try {
+                    if (window._adminKpiTimer) { clearInterval(window._adminKpiTimer); }
+                    window._adminKpiTimer = setInterval(refreshDashboardStats, 15000);
+                    document.addEventListener('visibilitychange', () => {
+                        try {
+                            if (document.hidden) {
+                                if (window._adminKpiTimer) { clearInterval(window._adminKpiTimer); window._adminKpiTimer = null; }
+                            } else {
+                                refreshDashboardStats();
+                                if (!window._adminKpiTimer) { window._adminKpiTimer = setInterval(refreshDashboardStats, 15000); }
+                            }
+                        } catch(_) {}
+                    });
+                } catch(_) {}
+                console.log('Dashboard section shown');
+                
+                // Initialize admin notes
+                initializeAdminNotes();
+                console.log('Admin notes initialized');
+                
+                // Start the clock
+                updateTime();
+                setInterval(updateTime, 1000);
+                console.log('Clock started');
+
+                // Populate initial schedule
+                populateScheduleTable(new Date());
+                console.log('Schedule populated');
+                
+                updateView();
+                console.log('View updated');
+                
+                // Hash routing: #dashboard, #schedule, #manage, #logins
+                if (location.hash) {
+                    const h = location.hash;
+                    if (h === '#dashboard') {
+                        hideAllSections();
+                        dashboardSection.classList.remove('hidden');
+                        try { initCollegeMap(); } catch(_) {}
+                        try { refreshDashboardStats(); } catch(_) {}
+                        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_) {}
+                    } else if (h === '#schedule') {
+                        hideAllSections();
+                        scheduleSection.classList.remove('hidden');
+                        generateWeeklyDates();
+                        populateScheduleTable(new Date());
+                        setActiveTab(scheduleTab);
+                    } else if (h === '#manage') {
+                        hideAllSections();
+                        manageSection.classList.remove('hidden');
+                        populateUserRoutesTable();
+                        setActiveTab(manageTab);
+                    } else if (h === '#logins') {
+                        hideAllSections();
+                        loginsSection.classList.remove('hidden');
+                        loadLoginLogs();
+                        setActiveTab(loginsTab);
+                    }
+                }
+                
+                console.log('Admin interface initialization complete');
+            } catch (error) {
+                console.error('Error during admin interface initialization:', error);
+            }
+        });
+    </script>
+</body>
+</html>
