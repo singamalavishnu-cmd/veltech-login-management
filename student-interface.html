@@ -34,6 +34,7 @@
                 </div>
                 <!-- Navigation Tabs -->
                 <nav class="flex space-x-2 md:space-x-4" role="tablist">
+                    <button id="dashboard-tab" role="tab" aria-controls="dashboard-section" aria-selected="true" class="px-3 py-2 md:px-4 md:py-2 font-medium text-gray-600 rounded-lg hover:bg-gray-200 focus:outline-none focus:bg-gray-200 transition-colors duration-200 bg-gray-200 text-gray-800">Dashboard</button>
                     <button id="schedule-tab" role="tab" aria-controls="schedule-section" aria-selected="false" class="px-3 py-2 md:px-4 md:py-2 font-medium text-gray-600 rounded-lg hover:bg-gray-200 focus:outline-none focus:bg-gray-200 transition-colors duration-200">Bus Schedule</button>
                     <button id="student-logout-btn" class="px-3 py-2 md:px-4 md:py-2 font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:bg-red-700 transition-colors duration-200">Logout</button>
                 </nav>
@@ -50,7 +51,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Active Buses</p>
-                            <h2 class="text-3xl font-semibold text-gray-800" id="active-buses-count">10</h2>
+                            <h2 class="text-3xl font-semibold text-gray-800" id="active-buses-count">0</h2>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.553-.894L11 8m0 0l-5 2.5a1 1 0 010 1.789l5 2.5m0 0l7.585-3.793a1 1 0 01.915-.028L19 12m-8 2l8 4"/>
@@ -60,7 +61,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500">On-Time Departures</p>
-                            <h2 class="text-3xl font-semibold text-gray-800" id="on-time-count">12</h2>
+                            <h2 class="text-3xl font-semibold text-gray-800" id="on-time-count">0</h2>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -71,7 +72,7 @@
                 </div>
 
                 <div class="mt-8 bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">College Location</h2>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">College Location & Live Map</h2>
                     <div id="map-placeholder" class="bg-gray-200 rounded-lg h-96 overflow-hidden cursor-pointer">
                         <div id="college-map-student" class="w-full h-full"></div>
                     </div>
@@ -85,7 +86,7 @@
                             
                         </div>
                         <p id="admin-notes-display" class="text-gray-600">
-                            Dear students, please be informed that buses will depart 15 minutes earlier than scheduled on Saturday, October 26, due to the upcoming sports event. Plan your travel accordingly.
+                            Loading notes...
                         </p>
                         <textarea id="admin-notes-textarea" class="hidden w-full mt-2 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
                         <button id="save-notes-btn" class="hidden mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">Save</button>
@@ -129,63 +130,7 @@
                 </div>
             </section>
 
-            <!-- Manage Routes Section -->
-            <section id="manage-section" class="content-section hidden hidden-student">
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Manage Routes</h2>
-                    <div class="flex items-center space-x-2 mb-4">
-                        <label for="schedule-date" class="text-sm font-medium text-gray-700">Select Date:</label>
-                        <input type="date" id="schedule-date" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-                    <form id="add-bus-form" class="space-y-4">
-                        <div>
-                            <label for="bus-number" class="block text-sm font-medium text-gray-700">Bus Number</label>
-                            <input type="text" id="bus-number" name="busNumber" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                        <div>
-                            <label for="route-name" class="block text-sm font-medium text-gray-700">Route Name</label>
-                            <input type="text" id="route-name" name="routeName" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                         <div>
-                            <label for="departure-time" class="block text-sm font-medium text-gray-700">Departure Time</label>
-                            <input type="time" id="departure-time" name="departureTime" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                         <div>
-                            <label for="eta" class="block text-sm font-medium text-gray-700">ETA</label>
-                            <input type="time" id="eta" name="eta" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                         <div>
-                            <label for="stops-data" class="block text-sm font-medium text-gray-700">
-                                Stops with ETA
-                                <p class="text-xs text-gray-500 mt-1">Format: Stop Name,HH:MM AM/PM; Stop Name,HH:MM AM/PM; ...</p>
-                            </label>
-                            <textarea id="stops-data" name="stopsData" rows="4" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
-                        </div>
-                        <button type="submit" id="submit-btn" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">Add Bus</button>
-                    </form>
-
-                    <div class="mt-8">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-2">User-Added Routes</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full table-auto border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                                        <th class="py-3 px-6 text-left rounded-tl-lg">Bus No.</th>
-                                        <th class="py-3 px-6 text-left">Route</th>
-                                        <th class="py-3 px-6 text-left">Departure Time</th>
-                                        <th class="py-3 px-6 text-left">ETA</th>
-                                        <th class="py-3 px-6 text-left">Stops</th>
-                                        <th class="py-3 px-6 text-left rounded-tr-lg">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="user-routes-table-body" class="text-gray-600 text-sm font-medium">
-                                    <!-- User-added data will be populated here by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            
         </main>
         
         <!-- Loading Spinner -->
@@ -240,16 +185,31 @@
             } catch (e) {}
         })();
         
-        // --- Persistence Keys ---
-        const STORAGE_KEYS = {
-            notes: 'vt_admin_notes',
-            routes: 'vt_added_routes'
-        };
+        // --- Data Mockup (expanded) ---
+        const busScheduleData = [
+            { 
+                busNo: 'VT-01', route: 'Chennai Central (Mock)', 
+                schedule: {
+                    Sunday: { departureTime: '09:00', eta: '09:45' },
+                    Monday: { departureTime: '08:00', eta: '08:45' },
+                    Tuesday: { departureTime: '08:00', eta: '08:45' },
+                    Wednesday: { departureTime: '08:00', eta: '08:45' },
+                    Thursday: { departureTime: '08:00', eta: '08:45' },
+                    Friday: { departureTime: '08:00', eta: '08:45' },
+                    Saturday: { departureTime: '08:30', eta: '09:15'},
+                },
+                stops: [
+                    { name: 'Vel Tech University', time: '08:00' },
+                    { name: 'Avadi', time: '08:15' },
+                    { name: 'Chennai Central', time: '09:15' }
+                ],
+                isUserAdded: false
+            }
+        ];
         
-        // Routes created by admin
+        // Routes created by admin (fetched from DB)
         let adminAddedRoutes = [];
         const daysOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-        const busScheduleData = [];
         
         // --- DOM Elements ---
         const dashboardTab = document.getElementById('dashboard-tab');
@@ -307,13 +267,13 @@
         async function logStudentLogin() {
             if (!window.supabaseClient) return;
             try {
-                const { data: userData } = await window.supabaseClient.auth.getUser();
-                const user = userData?.user;
-                if (!user) return;
-                const studentId = user.user_metadata?.student_id || null;
-                const email = user.email || user.user_metadata?.email || null;
+                // Since this uses anon/authenticated role, we don't need the session check
+                // but we need to pass student data
+                const studentId = localStorage.getItem('vt_student_id') || null;
+                const studentEmail = `vtu${studentId}@veltech.edu.in`; // Synthetic email for logging
+                
                 await window.supabaseClient.rpc('log_student_login', {
-                    p_email: email,
+                    p_email: studentEmail,
                     p_student_id: studentId
                 });
             } catch(_) {}
@@ -335,18 +295,26 @@
                 if (!hhmm) return '';
                 const [h, m] = hhmm.split(':');
                 let hour = parseInt(h, 10);
+                let minute = parseInt(m, 10);
                 const ampm = hour >= 12 ? 'PM' : 'AM';
-                hour = hour % 12; if (hour === 0) hour = 12;
-                return `${hour.toString().padStart(1,'0')}:${(m||'00').padStart(2,'0')} ${ampm}`;
+                hour = hour % 12; 
+                if (hour === 0) hour = 12;
+                return `${hour.toString().padStart(1,'0')}:${(minute||'00').toString().padStart(2,'0')} ${ampm}`;
             } catch { return hhmm; }
         }
 
         function showStops(busNo) {
             try {
-                let bus = null;
-                bus = (adminAddedRoutes || []).find(b => b && b.busNo === busNo) ||
-                      (busScheduleData || []).find(b => b && b.busNo === busNo) || null;
-                if (!bus || !Array.isArray(bus.stops)) return;
+                const mockRoutes = busScheduleData.filter(b => !b.isUserAdded);
+                const allBusData = [...mockRoutes, ...adminAddedRoutes];
+                
+                const bus = allBusData.find(b => b && b.busNo === busNo) || null;
+                      
+                if (!bus || !Array.isArray(bus.stops)) {
+                    showMessage(`Stops not found for Bus ${busNo}.`);
+                    return;
+                }
+                
                 if (stopsModalTitle) stopsModalTitle.textContent = `Stops for Bus ${busNo}`;
                 if (stopsTableBody) {
                     stopsTableBody.innerHTML = '';
@@ -369,15 +337,20 @@
         function populateScheduleTable(selectedDate) {
                 scheduleTableBody.innerHTML = '';
                 const dayOfWeek = daysOfWeek[selectedDate.getDay()];
-
-                const allBusData = [...busScheduleData, ...adminAddedRoutes];
                 
+                const mockRoutes = busScheduleData.filter(b => !b.isUserAdded);
+                const allBusData = [...mockRoutes, ...adminAddedRoutes];
+                
+                if (allBusData.length === 0) {
+                     scheduleTableBody.innerHTML = `<tr><td colspan="4" class="py-3 px-6 text-center text-gray-400">No schedules available for this day.</td></tr>`;
+                     return;
+                }
+
                 allBusData.forEach(bus => {
                     const schedule = bus.schedule[dayOfWeek];
                     if (schedule) {
                         const row = document.createElement('tr');
                         row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100', 'transition-colors', 'duration-200', 'cursor-pointer');
-                        row.setAttribute('data-bus-no', bus.busNo);
                         row.setAttribute('data-bus-no', bus.busNo || '');
                         row.innerHTML = `
                             <td class="py-3 px-6">${bus.busNo}</td>
@@ -403,6 +376,7 @@
         const activeBusesCountEl = document.getElementById('active-buses-count');
         const onTimeCountEl = document.getElementById('on-time-count');
 
+        // Helper: parse schedule time string (supports 'HH:MM' 24h) into a Date today
         function parseScheduleTimeToDate(timeStr) {
             try {
                 if (!timeStr) return null;
@@ -410,25 +384,18 @@
                 const yyyy = now.getFullYear();
                 const mm = now.getMonth();
                 const dd = now.getDate();
-                let h = 0, m = 0;
-                const ampmMatch = /\s*(AM|PM)\s*$/i.exec(timeStr);
-                if (ampmMatch) {
-                    const [hh, mi] = timeStr.replace(/\s*(AM|PM)\s*$/i, '').split(':');
-                    h = parseInt(hh, 10) || 0; m = parseInt(mi, 10) || 0;
-                    const isPM = ampmMatch[1].toUpperCase() === 'PM';
-                    h = h % 12 + (isPM ? 12 : 0);
-                } else {
-                    const [hh, mi] = timeStr.split(':');
-                    h = parseInt(hh, 10) || 0; m = parseInt(mi, 10) || 0;
-                }
-                return new Date(yyyy, mm, dd, h, m, 0, 0);
+                const [h, m] = timeStr.split(':');
+                let hour = parseInt(h, 10) || 0;
+                let minute = parseInt(m, 10) || 0;
+                return new Date(yyyy, mm, dd, hour, minute, 0, 0);
             } catch (_) { return null; }
         }
 
         async function refreshStudentDashboardStats() {
             let active = 0;
             let onTime = 0;
-            const allBusData = [...busScheduleData, ...adminAddedRoutes];
+            const mockRoutes = busScheduleData.filter(b => !b.isUserAdded);
+            const allBusData = [...mockRoutes, ...adminAddedRoutes];
 
             // Fetch current positions (bus_no, updated_at)
             let positions = [];
@@ -466,6 +433,9 @@
         }
 
         let _studentMapInitialized = false;
+        let _studentBusMarkers = new Map();
+        let _studentBusPollTimer = null;
+        
         function initStudentMap() {
             try {
                 const el = document.getElementById('college-map-student');
@@ -473,6 +443,7 @@
                 if (!el.style.height || el.clientHeight === 0) { el.style.height = '100%'; }
                 const LAT = 13.177470064893306;
                 const LNG = 80.09811982470028;
+                
                 // If map already exists, just recenter and update marker/handlers
                 if (window._studentLeafletMap) {
                     try {
@@ -526,7 +497,6 @@
         function hideStopsModal() {
             if (stopsModal) {
                 stopsModal.classList.add('hidden');
-                console.log('Modal hidden');
             }
         }
         // Allow closing the stops modal by clicking the backdrop
@@ -545,20 +515,11 @@
         });
          
          /**
-          * Initializes the admin notes display.
+          * Initializes the admin notes display by fetching the latest note.
           */
          async function initializeAdminNotes() {
-            // Supabase-only load (latest note)
-            try { if (adminNotesDisplay) adminNotesDisplay.textContent = 'Loading notes...'; } catch(_) {}
-            if (!window.supabaseClient) {
-                try {
-                    const ls = localStorage.getItem('vt_admin_notes');
-                    if (adminNotesDisplay) adminNotesDisplay.textContent = ls || '';
-                } catch(_) {}
-                return;
-            }
-            try {
-                let note = '';
+            adminNotesDisplay.textContent = 'Loading notes...';
+            if (window.supabaseClient) {
                 try {
                     const { data, error } = await window.supabaseClient
                         .from('admin_notes')
@@ -566,47 +527,28 @@
                         .order('updated_at', { ascending: false })
                         .limit(1);
                     if (!error && Array.isArray(data) && data.length > 0) {
-                        note = data[0].content || '';
+                        adminNotesDisplay.textContent = data[0].content || '';
+                    } else if (data && data.length === 0) {
+                        adminNotesDisplay.textContent = 'No special notes from Admin at this time.';
                     }
-                } catch (e1) {
-                    // fallback: order by id desc
-                    const { data: data2, error: err2 } = await window.supabaseClient
-                        .from('admin_notes')
-                        .select('content, id')
-                        .order('id', { ascending: false })
-                        .limit(1);
-                    if (!err2 && Array.isArray(data2) && data2.length > 0) {
-                        note = data2[0].content || '';
-                    }
+                } catch (e) { 
+                    console.error('initializeAdminNotes error', e); 
+                    adminNotesDisplay.textContent = 'Failed to load notes.';
                 }
-                // If Supabase returned nothing, attempt localStorage fallback
-                if (!note) {
-                    try { note = localStorage.getItem('vt_admin_notes') || ''; } catch(_) {}
-                }
-                adminNotesDisplay.textContent = note;
-                if (!note) { try { adminNotesDisplay.textContent = ''; } catch(_) {} }
-            } catch (e) {
-                try { console.error('initializeAdminNotes error', e); } catch(_){}
-                try {
-                    const ls = localStorage.getItem('vt_admin_notes');
-                    if (adminNotesDisplay) adminNotesDisplay.textContent = ls || '';
-                } catch(_) {}
             }
          }
 
-         // Realtime subscription for admin notes (no polling)
+         // Realtime subscription for admin notes
         let _notesChannel = null;
-        let _notesPollTimer = null;
         function subscribeAdminNotes() {
             try {
                 if (!window.supabaseClient || _notesChannel) return;
                 _notesChannel = window.supabaseClient
-                  .channel('admin_notes_live')
+                  .channel('admin_notes_live_student')
                   .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_notes' }, (payload) => {
                       try {
                           const row = payload.new || payload.old || null;
                           if (payload.eventType === 'DELETE') {
-                              // On delete of latest note, refetch to decide what to show
                               initializeAdminNotes();
                               return;
                           }
@@ -621,8 +563,10 @@
             } catch(_) {}
         }
 
+         /**
+          * Loads routes from the database and structures them for local use.
+          */
          async function loadAdminRoutes() {
-            // Supabase-only load
             adminAddedRoutes = [];
             if (!window.supabaseClient) return;
             try {
@@ -632,18 +576,30 @@
                 if (!error && Array.isArray(data)) {
                     adminAddedRoutes = data.map(r => {
                         const stopsArr = (r.route_stops || []).sort((a,b)=>a.sequence_order-b.sequence_order);
-                        const stops = stopsArr.map(s => ({ name: (s.bus_stops && s.bus_stops.stop_name) || '', time: (s.estimated_arrival_time || '').toString().slice(0,5) }));
-                        const dep = stopsArr.length ? (stopsArr[0].estimated_arrival_time || '').toString().slice(0,5) : '';
-                        const arr = stopsArr.length ? (stopsArr[stopsArr.length-1].estimated_arrival_time || '').toString().slice(0,5) : '';
+                        
+                        const stops = stopsArr.map(s => ({ 
+                            name: (s.bus_stops && s.bus_stops.stop_name) || '', 
+                            time: (s.estimated_arrival_time || '').toString().slice(0,5) // 24h HH:MM
+                        }));
+                        
+                        const dep = stopsArr.length ? stops[0].time : ''; // Departure is first stop time
+                        const arr = stopsArr.length ? stops[stopsArr.length-1].time : ''; // ETA is last stop time
+                        
                         const sched = {};
-                        daysOfWeek.forEach(d=>{ sched[d]={ departureTime: dep, eta: arr }; });
-                        return { busNo: r.route_number, route: r.route_name, schedule: sched, stops };
+                        // Schedule for all days is the same (based on the stops data)
+                        daysOfWeek.forEach(d=>{ 
+                            sched[d]={ 
+                                departureTime: dep, 
+                                eta: arr 
+                            }; 
+                        });
+                        return { busNo: r.route_number, route: r.route_name, schedule: sched, stops, isUserAdded: true };
                     });
+                } else if (error) {
+                    console.error("Error loading admin routes:", error);
                 }
-            } catch (e) { try { console.error('loadAdminRoutes DB error', e); } catch(_){} }
+            } catch (e) { console.error('loadAdminRoutes DB error', e); }
          }
-
-         // Supabase-only mode: no cross-tab localStorage syncing
 
          /**
           * Generates and displays the clickable weekly date buttons.
@@ -712,11 +668,15 @@
         if (logo) { logo.addEventListener('click', showDashboard); }
         if (siteTitle) { siteTitle.addEventListener('click', showDashboard); }
 
-        scheduleTab.addEventListener('click', () => {
+        scheduleTab.addEventListener('click', async () => {
             hideAllSections();
             scheduleSection.classList.remove('hidden');
-            generateWeeklyDates(); // Populate the weekly dates for students
-            populateScheduleTable(new Date()); // Load today's schedule by default
+            
+            // Reload routes and then display
+            await loadAdminRoutes();
+            generateWeeklyDates(); 
+            populateScheduleTable(new Date()); 
+            
             try { setActiveTab(scheduleTab); location.hash = '#schedule'; } catch(_) {}
         });
 
@@ -725,15 +685,15 @@
         messageOkBtn.addEventListener('click', hideMessage);
         
         // --- Optional Live Bus Markers (Student) ---
-        let _studentBusMarkers;
-        let _studentBusPollTimer;
         function initLiveBusesStudent() {
             try {
                 if (!window.supabaseClient || !window._studentLeafletMap) return;
                 if (!_studentBusMarkers) _studentBusMarkers = new Map();
+                
                 // initial load
                 loadCurrentBusPositionsStudent();
-                // polling every 10s (works without Realtime)
+                
+                // polling every 10s (works without Realtime but Realtime is better)
                 if (!_studentBusPollTimer) {
                     _studentBusPollTimer = setInterval(loadCurrentBusPositionsStudent, 10000);
                 }
@@ -756,7 +716,15 @@
                 if (_studentBusMarkers.has(busNo)) {
                     _studentBusMarkers.get(busNo).setLatLng(pos);
                 } else {
-                    const mk = L.marker(pos, { title: `Bus ${busNo}` }).addTo(window._studentLeafletMap).bindTooltip(`Bus ${busNo}`);
+                    // Custom bus icon placeholder (simple blue marker)
+                    const busIcon = L.divIcon({
+                        className: 'custom-bus-icon',
+                        html: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 4h-2l-2-2h-4L8 4H6C5 4 4 5 4 6v10c0 1 1 2 2 2h10c1 0 2-1 2-2V6c0-1-1-2-2-2zm-6 14H8v-2h2v2zm4 0h-2v-2h2v2zm-6-4H6V6h12v8h-2V8h-8v6z" fill="#EF4444"/><circle cx="8" cy="18" r="1.5" fill="#EF4444"/><circle cx="14" cy="18" r="1.5" fill="#EF4444"/></svg>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    });
+                    
+                    const mk = L.marker(pos, { icon: busIcon, title: `Bus ${busNo}` }).addTo(window._studentLeafletMap).bindTooltip(`Bus ${busNo}`);
                     _studentBusMarkers.set(busNo, mk);
                 }
             } catch (e) {}
@@ -772,11 +740,9 @@
                     try {
                         if (document.hidden) {
                             if (window._studentKpiTimer) { clearInterval(window._studentKpiTimer); window._studentKpiTimer = null; }
-                            if (_notesPollTimer) { clearInterval(_notesPollTimer); _notesPollTimer = null; }
                         } else {
                             refreshStudentDashboardStats();
                             if (!window._studentKpiTimer) { window._studentKpiTimer = setInterval(refreshStudentDashboardStats, 15000); }
-                            if (!_notesPollTimer) { _notesPollTimer = setInterval(initializeAdminNotes, 15000); }
                         }
                     } catch(_) {}
                 });
@@ -788,12 +754,12 @@
                 if (h === '#dashboard') {
                     showDashboard();
                 } else if (h === '#schedule') {
-                    hideAllSections();
-                    scheduleSection.classList.remove('hidden');
-                    generateWeeklyDates();
-                    populateScheduleTable(new Date());
-                    setActiveTab(scheduleTab);
+                    // Click the tab to trigger its logic
+                    scheduleTab.click(); 
                 }
+            } else {
+                // Default view
+                showDashboard();
             }
         });
 
@@ -824,38 +790,25 @@
             console.log('Student interface initializing...');
             
             try {
-                // Ensure modal is hidden on page load
                 hideStopsModal();
-                console.log('Modal hidden on load');
                 
-                // Load admin data
+                // Load admin data (notes and routes)
+                await initializeAdminNotes();
+                subscribeAdminNotes(); 
                 await loadAdminRoutes();
-                console.log('Admin routes loaded');
-
-                // Display the dashboard by default
-                dashboardSection.classList.remove('hidden');
-                initStudentMap();
-                console.log('Dashboard section shown');
                 
-                // Initialize admin notes and subscribe to realtime updates
-                initializeAdminNotes();
-                subscribeAdminNotes();
-                console.log('Admin notes initialized');
-                try { if (_notesPollTimer) { clearInterval(_notesPollTimer); } _notesPollTimer = setInterval(initializeAdminNotes, 15000); } catch(_) {}
-
+                initStudentMap();
+                
                 // Start the clock
                 updateTime();
                 setInterval(updateTime, 1000);
-                console.log('Clock started');
-
+                
                 // Preload schedule for today
                 populateScheduleTable(new Date());
-                console.log('Schedule populated');
 
                 // Log student login (once per load)
                 logStudentLogin();
                 
-                console.log('Student interface initialization complete');
             } catch (error) {
                 console.error('Error during student interface initialization:', error);
             }

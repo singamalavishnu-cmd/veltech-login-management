@@ -697,6 +697,129 @@
             }
         }
 
+        // --- Live bus markers (Admin) ---
+        let _adminBusMarkers = new Map();
+        let _adminBusPollTimer = null;
+        let _busPosChannel = null;
+        let _adminBusTrails = new Map();
+
+        function upsertBusMarkerAdmin(busNo, lat, lng) {
+            try {
+                if (!window._collegeMap || !window.L) return;
+                const pos = [lat, lng];
+                if (_adminBusMarkers.has(busNo)) {
+                    _adminBusMarkers.get(busNo).setLatLng(pos);
+                } else {
+                    const busIcon = window.L.divIcon({
+                        className: 'custom-bus-icon',
+                        html: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 4h-2l-2-2h-4L8 4H6C5 4 4 5 4 6v10c0 1 1 2 2 2h10c1 0 2-1 2-2V6c0-1-1-2-2-2zm-6 14H8v-2h2v2zm4 0h-2v-2h2v2zm-6-4H6V6h12v8h-2V8h-8v6z" fill="#EF4444"/><circle cx="8" cy="18" r="1.5" fill="#EF4444"/><circle cx="14" cy="18" r="1.5" fill="#EF4444"/></svg>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    });
+                    const mk = window.L.marker(pos, { icon: busIcon, title: `Bus ${busNo}` })
+                        .addTo(window._collegeMap)
+                        .bindTooltip(`Bus ${busNo}`);
+                    _adminBusMarkers.set(busNo, mk);
+                }
+                upsertBusTrailAdmin(busNo, lat, lng);
+            } catch(_) {}
+        }
+
+        function removeBusMarkerAdmin(busNo) {
+            try {
+                if (_adminBusMarkers && _adminBusMarkers.has(busNo)) {
+                    const mk = _adminBusMarkers.get(busNo);
+                    try { window._collegeMap.removeLayer(mk); } catch(_) {}
+                    _adminBusMarkers.delete(busNo);
+                }
+                removeBusTrailAdmin(busNo);
+            } catch(_) {}
+        }
+
+        function upsertBusTrailAdmin(busNo, lat, lng) {
+            try {
+                if (!window._collegeMap || !window.L) return;
+                const key = String(busNo);
+                const pos = [lat, lng];
+                let o = _adminBusTrails.get(key);
+                if (!o) {
+                    const poly = window.L.polyline([pos], { color: '#111827', weight: 3, opacity: 0.9 });
+                    poly.addTo(window._collegeMap);
+                    _adminBusTrails.set(key, { poly, points: [pos] });
+                } else {
+                    const pts = o.points;
+                    const last = pts[pts.length - 1];
+                    if (!last || last[0] !== lat || last[1] !== lng) {
+                        pts.push(pos);
+                        if (pts.length > 50) { pts.shift(); }
+                        o.poly.setLatLngs(pts);
+                    }
+                }
+            } catch(_) {}
+        }
+
+        function removeBusTrailAdmin(busNo) {
+            try {
+                const key = String(busNo);
+                if (_adminBusTrails && _adminBusTrails.has(key)) {
+                    const o = _adminBusTrails.get(key);
+                    try { window._collegeMap.removeLayer(o.poly); } catch(_) {}
+                    _adminBusTrails.delete(key);
+                }
+            } catch(_) {}
+        }
+
+        async function loadCurrentBusPositionsAdmin() {
+            try {
+                if (!window.supabaseClient) return;
+                const { data, error } = await window.supabaseClient
+                    .from('bus_positions')
+                    .select('bus_no, lat, lng');
+                if (!error && Array.isArray(data)) {
+                    data.forEach(r => {
+                        if (r && r.bus_no != null && r.lat != null && r.lng != null) {
+                            upsertBusMarkerAdmin(r.bus_no, r.lat, r.lng);
+                        }
+                    });
+                }
+            } catch(_) {}
+        }
+
+        function subscribeBusPositionsAdmin() {
+            try {
+                if (!window.supabaseClient || _busPosChannel) return;
+                _busPosChannel = window.supabaseClient
+                  .channel('bus_positions_live_admin')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'bus_positions' }, (payload) => {
+                      try {
+                          const row = payload.new || payload.old || null;
+                          if (payload.eventType === 'DELETE') {
+                              if (row && row.bus_no) removeBusMarkerAdmin(row.bus_no);
+                              return;
+                          }
+                          if (row && row.bus_no != null && row.lat != null && row.lng != null) {
+                              upsertBusMarkerAdmin(row.bus_no, row.lat, row.lng);
+                          } else {
+                              // Fallback: refetch
+                              loadCurrentBusPositionsAdmin();
+                          }
+                      } catch(_) {}
+                  })
+                  .subscribe();
+            } catch(_) {}
+        }
+
+        function initLiveBusesAdmin() {
+            try {
+                if (!window.supabaseClient || !window._collegeMap) return;
+                loadCurrentBusPositionsAdmin();
+                if (!_adminBusPollTimer) {
+                    _adminBusPollTimer = setInterval(loadCurrentBusPositionsAdmin, 10000);
+                }
+                subscribeBusPositionsAdmin();
+            } catch(_) {}
+        }
+
         // Change Password modal helpers
         function openChangePasswordModal() {
             cpError.classList.add('hidden');
@@ -1485,6 +1608,7 @@
                 hideAllSections();
                 dashboardSection.classList.remove('hidden');
                 try { initCollegeMap(); } catch(_) {}
+                try { initLiveBusesAdmin(); } catch(_) {}
                 try { refreshDashboardStats(); } catch(_) {}
                 try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_) {}
                 try { location.hash = '#dashboard'; } catch(_) {}
@@ -1495,6 +1619,7 @@
                 hideAllSections();
                 dashboardSection.classList.remove('hidden');
                 try { initCollegeMap(); } catch(_) {}
+                try { initLiveBusesAdmin(); } catch(_) {}
                 try { refreshDashboardStats(); } catch(_) {}
                 try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_) {}
                 try { location.hash = '#dashboard'; } catch(_) {}
@@ -1660,6 +1785,7 @@
                 // Display the dashboard by default
                 dashboardSection.classList.remove('hidden');
                 initCollegeMap();
+                try { initLiveBusesAdmin(); } catch(_) {}
                 // Initial KPI refresh and periodic updates (visibility-aware)
                 try { refreshDashboardStats(); } catch(_) {}
                 try {
@@ -1669,9 +1795,11 @@
                         try {
                             if (document.hidden) {
                                 if (window._adminKpiTimer) { clearInterval(window._adminKpiTimer); window._adminKpiTimer = null; }
+                                if (_adminBusPollTimer) { clearInterval(_adminBusPollTimer); _adminBusPollTimer = null; }
                             } else {
                                 refreshDashboardStats();
                                 if (!window._adminKpiTimer) { window._adminKpiTimer = setInterval(refreshDashboardStats, 15000); }
+                                if (!_adminBusPollTimer) { _adminBusPollTimer = setInterval(loadCurrentBusPositionsAdmin, 10000); }
                             }
                         } catch(_) {}
                     });
@@ -1701,6 +1829,7 @@
                         hideAllSections();
                         dashboardSection.classList.remove('hidden');
                         try { initCollegeMap(); } catch(_) {}
+                        try { initLiveBusesAdmin(); } catch(_) {}
                         try { refreshDashboardStats(); } catch(_) {}
                         try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_) {}
                     } else if (h === '#schedule') {
