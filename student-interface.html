@@ -435,6 +435,7 @@
         let _studentMapInitialized = false;
         let _studentBusMarkers = new Map();
         let _studentBusPollTimer = null;
+        let _studentBusChannel = null;
         
         function initStudentMap() {
             try {
@@ -697,14 +698,29 @@
                 if (!_studentBusPollTimer) {
                     _studentBusPollTimer = setInterval(loadCurrentBusPositionsStudent, 10000);
                 }
+                subscribeBusPositionsStudent();
             } catch (e) {}
         }
 
         async function loadCurrentBusPositionsStudent() {
             try {
-                const { data, error } = await supabaseClient.from('bus_positions').select('bus_no, lat, lng');
+                if (!window.supabaseClient) return;
+                const { data, error } = await window.supabaseClient.from('bus_positions').select('bus_no, lat, lng');
                 if (!error && Array.isArray(data)) {
-                    data.forEach(r => upsertBusMarkerStudent(r.bus_no, r.lat, r.lng));
+                    const seen = new Set();
+                    data.forEach(r => {
+                        if (r && r.bus_no != null && r.lat != null && r.lng != null) {
+                            seen.add(r.bus_no);
+                            upsertBusMarkerStudent(r.bus_no, r.lat, r.lng);
+                        }
+                    });
+                    if (_studentBusMarkers) {
+                        Array.from(_studentBusMarkers.keys()).forEach(key => {
+                            if (!seen.has(key)) {
+                                removeBusMarkerStudent(key);
+                            }
+                        });
+                    }
                 }
             } catch (e) {}
         }
@@ -728,6 +744,41 @@
                     _studentBusMarkers.set(busNo, mk);
                 }
             } catch (e) {}
+        }
+
+        function removeBusMarkerStudent(busNo) {
+            try {
+                if (_studentBusMarkers && _studentBusMarkers.has(busNo)) {
+                    const mk = _studentBusMarkers.get(busNo);
+                    try { window._studentLeafletMap.removeLayer(mk); } catch(_) {}
+                    _studentBusMarkers.delete(busNo);
+                }
+            } catch (e) {}
+        }
+
+        function subscribeBusPositionsStudent() {
+            try {
+                if (!window.supabaseClient || _studentBusChannel) return;
+                _studentBusChannel = window.supabaseClient
+                  .channel('bus_positions_live_student')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'bus_positions' }, (payload) => {
+                      try {
+                          const row = payload.new || payload.old || null;
+                          if (payload.eventType === 'DELETE') {
+                              if (row && row.bus_no != null) removeBusMarkerStudent(row.bus_no);
+                              return;
+                          }
+                          if (row && row.bus_no != null && row.lat != null && row.lng != null) {
+                              upsertBusMarkerStudent(row.bus_no, row.lat, row.lng);
+                          } else if (row && row.bus_no != null) {
+                              removeBusMarkerStudent(row.bus_no);
+                          } else {
+                              loadCurrentBusPositionsStudent();
+                          }
+                      } catch (_) {}
+                  })
+                  .subscribe();
+            } catch (_) {}
         }
 
         // Refresh student KPIs on dashboard show and periodically (visibility-aware) + hash routing

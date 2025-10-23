@@ -71,6 +71,8 @@
     let watchId = null;
     let timerId = null;
     let latest = null;
+    let isTracking = false;
+    let pendingUpsert = null;
 
     function setStatus(text, isBusy=false) {
       statusEl.textContent = text;
@@ -88,7 +90,10 @@
       if (!supa) { showError('Supabase not configured'); return; }
       try {
         const payload = { bus_no: busNo, lat, lng, speed, heading, updated_at: new Date().toISOString() };
-        const { error } = await supa.from('bus_positions').upsert(payload, { onConflict: 'bus_no' });
+        const promise = supa.from('bus_positions').upsert(payload, { onConflict: 'bus_no' });
+        pendingUpsert = promise;
+        const { error } = await promise;
+        if (pendingUpsert === promise) { pendingUpsert = null; }
         if (error) { console.error('upsert error', error); showError(error.message); }
       } catch (e) { console.error('upsert exception', e); showError('Network/DB error'); }
     }
@@ -99,6 +104,7 @@
       if (!('geolocation' in navigator)) { showError('Geolocation not supported'); return; }
 
       const intervalMs = parseInt(intervalEl.value, 10) || 10000;
+      isTracking = true;
       latest = null;
 
       setStatus('Tracking started…', true);
@@ -119,18 +125,33 @@
 
       // Interval sender (throttled)
       timerId = setInterval(() => {
-        if (!latest) return;
+        if (!isTracking || !latest) return;
         upsertPosition(busNo, latest.lat, latest.lng, latest.speed ?? null, latest.heading ?? null);
       }, intervalMs);
     }
 
-    function stopTracking() {
+    async function stopTracking() {
+      isTracking = false;
       if (watchId !== null) {
         try { navigator.geolocation.clearWatch(watchId); } catch(_) {}
         watchId = null;
       }
       if (timerId) { clearInterval(timerId); timerId = null; }
+      if (pendingUpsert) {
+        try { await pendingUpsert; } catch(_) {}
+        pendingUpsert = null;
+      }
+      latest = null;
+      const busNo = (busNoEl.value || '').trim();
+      if (busNo && supa) {
+        try {
+          await supa.from('bus_positions').delete().eq('bus_no', busNo);
+        } catch (e) {
+          console.error('delete error', e);
+        }
+      }
       setStatus('Idle');
+      lastEl.textContent = '';
     }
 
     startBtn.addEventListener('click', startTracking);

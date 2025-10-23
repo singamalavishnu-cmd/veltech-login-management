@@ -776,11 +776,20 @@
                     .from('bus_positions')
                     .select('bus_no, lat, lng');
                 if (!error && Array.isArray(data)) {
+                    const seen = new Set();
                     data.forEach(r => {
                         if (r && r.bus_no != null && r.lat != null && r.lng != null) {
+                            seen.add(r.bus_no);
                             upsertBusMarkerAdmin(r.bus_no, r.lat, r.lng);
                         }
                     });
+                    if (_adminBusMarkers) {
+                        Array.from(_adminBusMarkers.keys()).forEach(key => {
+                            if (!seen.has(key)) {
+                                removeBusMarkerAdmin(key);
+                            }
+                        });
+                    }
                 }
             } catch(_) {}
         }
@@ -799,6 +808,8 @@
                           }
                           if (row && row.bus_no != null && row.lat != null && row.lng != null) {
                               upsertBusMarkerAdmin(row.bus_no, row.lat, row.lng);
+                          } else if (row && row.bus_no != null) {
+                              removeBusMarkerAdmin(row.bus_no);
                           } else {
                               // Fallback: refetch
                               loadCurrentBusPositionsAdmin();
